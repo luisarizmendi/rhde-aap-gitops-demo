@@ -1,0 +1,31 @@
+---
+- name: "DEMO: OSTree upgrade - System preparation"
+  hosts: image_builder
+  gather_facts: true
+  vars_files:
+  - ../vars/main.yml
+  - ../vars/secrets.yml
+  tasks:
+
+        # Install image-builder with infra.osbuild collection (https://github.com/redhat-cop/infra.osbuild)
+        - name: Prepare Image Builder server
+          become: true
+          ansible.builtin.import_role:
+            name: infra.osbuild.setup_server
+
+
+        # Create microshift image
+        - become: true
+          ansible.builtin.import_role:
+            name: infra.osbuild.builder
+
+        - debug:
+            msg:  
+              - "Now:"
+              -   "1) Download the ISO image from: http://{{ ansible_host }}/{{ builder_blueprint_name }}/images/{{ builder_blueprint_output['current_version'] }}/{{ builder_blueprint_name }}_edge-installer.iso"
+              -   "2) Use the ISO to install the edge device"
+              -   "3) SSH to the device and get the kubeconfig file located in /var/lib/microshift/resources/kubeadmin/<reachable hostname>/"
+                        
+
+
+

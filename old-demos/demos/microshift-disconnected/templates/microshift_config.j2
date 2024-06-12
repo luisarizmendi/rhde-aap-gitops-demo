@@ -1,0 +1,26 @@
+cat > /etc/microshift/config.yaml <<EOF
+dns:
+  baseDomain: {{ microshift_config.baseDomain  }}
+network:
+  clusterNetwork:
+    - {{ microshift_config.clusterNetwork  }}
+  serviceNetwork:
+    - {{ microshift_config.serviceNetwork  }}
+  serviceNodePortRange: {{ microshift_config.serviceNodePortRange  }}
+node:
+  hostnameOverride: "{{ microshift_config.hostnameOverride  }}"
+  nodeIP: "{{ microshift_config.nodeIP  }}"
+apiServer:
+  subjectAltNames: 
+{% for name in microshift_config.subjectAltNames %}
+    - {{ name }}
+{% endfor %}
+debugging:
+  logLevel: "{{ microshift_config.logLevel  }}"
+
+EOF
+
+
+
+
+

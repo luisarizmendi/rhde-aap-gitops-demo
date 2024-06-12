@@ -1,0 +1,22 @@
+---
+- name: "DEMO: Publish OSTree image v2 (with error)"
+  hosts: image_builder
+  gather_facts: true
+  vars_files:
+  - ../vars/main.yml
+  tasks:
+
+    - name: Set fact
+      ansible.builtin.set_fact:
+        builder_blueprint_name: demo_upgrade 
+    
+    - shell: composer-cli compose status | grep {{ builder_blueprint_name }} | awk '{print $9}' | sort -r | head -n 1 | awk -F . '{print $3}'
+      register: image_last_version
+
+    - set_fact:
+        image_version: "0.0.{{ image_last_version.stdout|int - 1|int }}"
+
+
+    - ansible.builtin.include_tasks:
+        file: ../../../common/playbooks/publish-image.yml
+

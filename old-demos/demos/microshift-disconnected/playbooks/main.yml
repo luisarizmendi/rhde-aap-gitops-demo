@@ -1,0 +1,30 @@
+---
+- name: "Create MicroShift embedded image"
+  hosts: image_builder
+  become: true
+  gather_facts: true
+  vars_files:
+  - ../vars/main.yml
+
+- ansible.builtin.import_playbook: 00_image_builder_prepare.yml
+
+- ansible.builtin.import_playbook: 02_image_builder_microshift_prepare.yml
+
+- ansible.builtin.import_playbook: 03_generate_rpm_manifests.yml
+  when: microshift_embedded_manifests|default(false) 
+
+- ansible.builtin.import_playbook: 04_generate_rpm_usb_automation.yml
+  when: usb_automation|default(false) 
+
+# TODO: use 99_create_signed_usb.yaml with vars instead
+- ansible.builtin.import_playbook: 90_create_usb_automation_content.yml
+  when: usb_automation|default(false) and usb_content_create|default(false)
+
+- ansible.builtin.import_playbook: 91_create_kiosk_automation_rpm.yml
+  when: usb_automation|default(false) and usb_content_create|default(false) and kiosk_automation|default(false)
+
+- ansible.builtin.import_playbook: 05_generate_blueprint.yml
+  when: microshift_embedded_generate_blueprint|default(false) 
+
+- ansible.builtin.import_playbook: 10_image_builder_create.yml
+

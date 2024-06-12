@@ -1,0 +1,12 @@
+[Unit]
+Description=Config Kiosk Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/deactivation_kiosk.sh
+RemainAfterExit=true
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

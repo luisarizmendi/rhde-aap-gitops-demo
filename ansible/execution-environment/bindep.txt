@@ -1,0 +1,2 @@
+'kubernetes-client [platform:fedora]  # from collection community.kubernetes, kubernetes.core'
+'openshift-clients [platform:rhel-9]  # from collection kubernetes.core'

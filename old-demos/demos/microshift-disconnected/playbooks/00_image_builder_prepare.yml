@@ -1,0 +1,18 @@
+---
+- name: "Create MicroShift embedded image"
+  hosts: image_builder
+  become: true
+  gather_facts: true
+  vars_files:
+  - ../vars/main.yml
+  tasks:
+        - name: Install other dependencies
+          ansible.builtin.dnf:
+            name: podman
+            state: latest
+
+        # Install image-builder with infra.osbuild collection (https://github.com/redhat-cop/infra.osbuild)
+        - name: Prepare Image Builder server
+          ansible.builtin.import_role:
+            name: infra.osbuild.setup_server
+

@@ -1,0 +1,83 @@
+{% raw %}
+---
+- name: Fetch File Paths from Gitea Repository
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Check if the kubeconfig file exists
+      become: true
+      stat:
+        path: /var/lib/microshift/resources/kubeadmin/kubeconfig
+      register: kubeconfig_stat
+
+    - name: Deploy manifest in Microshift
+      when: kubeconfig_stat.stat.exists
+      block:
+        - name: Local Tasks
+          delegate_to: localhost
+          block:
+            - name: Extract gitea_base_url from git_repo_url
+              delegate_to: localhost
+              set_fact:
+                gitea_base_url: "{{ git_repo_url | regex_replace('(https?://[^/]+)/.*', '\\1') }}"
+
+            - name: Extract gitea_repo, gitea_branch, and manifest_path
+              delegate_to: localhost
+              set_fact:
+                gitea_repo: "{{ git_repo_url.split('/')[-1] }}"
+                gitea_branch: "{{ gitea_branch | default('main') }}"
+                manifest_path: "{{ env }}/{{ path_prefix }}/{{ path }}"
+
+            - name: Fetch file paths from Gitea API using username and password
+              delegate_to: localhost
+              uri:
+                url: "{{ gitea_base_url }}/api/v1/repos/{{ git_user }}/{{ gitea_repo }}/git/trees/{{ gitea_branch }}?recursive=1"
+                method: GET
+                headers:
+                  Authorization: "Basic {{ (git_user + ':' + git_password) | b64encode }}"
+                return_content: yes
+              register: gitea_response
+
+            - name: Extract file paths
+              delegate_to: localhost
+              set_fact:
+                file_paths: "{{ gitea_response.json.tree | map(attribute='path') | list }}"
+
+            - name: Filter file paths by manifest_path and extension (yaml or yml)
+              delegate_to: localhost
+              set_fact:
+                filtered_file_paths: "{{ file_paths | select('match', '^' + manifest_path + '/.*\\.(yaml|yml)$', 'multiline') | list }}"
+
+            - name: Construct base Git repository URL for raw files
+              delegate_to: localhost
+              set_fact:
+                base_raw_url: "{{ git_repo_url }}/raw/branch/main/"
+
+            - name: Prefix filtered file paths with base raw URL
+              delegate_to: localhost
+              set_fact:
+                filtered_file_paths_with_prefix: "{{ filtered_file_paths | map('regex_replace', '^(.*)$', base_raw_url + '\\1') | list }}"
+
+            - name: Display manifests
+              delegate_to: localhost
+              debug:
+                var: filtered_file_paths_with_prefix
+
+        - name: Fetch kubeconfig file from remote host
+          fetch:
+            src: /var/lib/microshift/resources/kubeadmin/{{  hostvars[inventory_hostname]['ansible_host'] }}/kubeconfig
+            dest: "/files/{{ inventory_hostname }}/"
+            flat: yes
+
+        - name: Apply Kubernetes Manifests
+          kubernetes.core.k8s:
+            kubeconfig: "/files/{{ inventory_hostname }}/kubeconfig"  
+            state: present
+            definition: "{{ lookup('ansible.builtin.url', item, username=git_user | quote, password=git_password | quote, force_basic_auth='True' )  | regex_replace(',', '\\n') }}"
+          loop: "{{ filtered_file_paths_with_prefix }}"
+          loop_control:
+            loop_var: item
+          delegate_to: localhost
+
+{% endraw %}

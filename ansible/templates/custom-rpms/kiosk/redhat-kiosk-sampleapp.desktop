@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Sample Application (Kiosk mode)
+Comment=This session logs you into a kiosk session showing a Sample Application
+Exec=gnome-session --session redhat-kiosk-sampleapp
+TryExec=gnome-session
+Type=Application
+DesktopNames=GNOME-Kiosk;GNOME;
+X-GDM-SessionRegisters=true

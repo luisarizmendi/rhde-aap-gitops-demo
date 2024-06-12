@@ -1,0 +1,19 @@
+{% raw %}
+dns:
+  baseDomain: "{{ ansible_host }}.nip.io"
+network:
+  clusterNetwork:
+    - 10.42.0.0/16
+  serviceNetwork:
+    - 10.43.0.0/16
+  serviceNodePortRange: 30000-32767
+node:
+  nodeIP: "{{ ansible_host }}"
+apiServer:
+  subjectAltNames: 
+    - microshift.lablocal
+    - microshift.{{ ansible_host }}.nip.io
+    - {{ ansible_host }}
+debugging:
+  logLevel: "Normal"
+{% endraw %}

@@ -1,0 +1,12 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: frontend
+  namespace: app2048
+spec:
+  port:
+    targetPort: 8081 
+  to:
+    kind: Service
+    name: test-service
+    weight: 10

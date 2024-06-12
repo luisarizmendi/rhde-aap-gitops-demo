@@ -1,0 +1,13 @@
+# This file contains defaults for new users. To edit, first
+# copy it to /etc/accountsservice/user-templates and make changes
+# there
+[Template]
+EnvironmentFiles=/etc/os-release;
+
+[com.redhat.AccountsServiceUser.System]
+id='${ID}'
+version-id='${VERSION_ID}'
+
+[User]
+Session=redhat-kiosk-sampleapp
+Icon=${HOME}/.face

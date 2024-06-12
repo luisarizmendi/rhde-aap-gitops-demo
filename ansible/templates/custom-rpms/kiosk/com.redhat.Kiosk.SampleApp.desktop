@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Sample Application
+Type=Application
+Exec=redhat-kiosk-sampleapp
+X-GNOME-HiddenUnderSystemd=true

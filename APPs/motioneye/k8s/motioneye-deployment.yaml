@@ -1,0 +1,51 @@
+
+apiVersion: apps/v1  
+kind: Deployment
+metadata:
+  name: motioneye
+  namespace: motioneye                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+  labels:                                                                                                                                                                                               
+    app: motioneye
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: motioneye
+  template:
+    metadata:
+      labels:
+        app: motioneye
+    spec:
+      serviceAccountName: privileged-sa
+      volumes:
+      - name: motioneye-lib-pv-storage
+        persistentVolumeClaim:
+          claimName: motioneye-lib-pv-claim
+      - name: motioneye-etc-pv-storage
+        persistentVolumeClaim:
+          claimName: motioneye-etc-pv-claim
+      - name: localtime
+        hostPath:
+          path: "/etc/localtime" 
+      containers:
+      - name: motioneye-container
+        image: ccrisan/motioneye:master-amd64
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 8765
+          protocol: TCP
+          name: "server"
+        volumeMounts:
+        - mountPath: "/etc/motioneye"
+          name: motioneye-etc-pv-storage
+        - mountPath: "/var/lib/motioneye"
+          name: motioneye-lib-pv-storage
+        - mountPath: "/etc/localtime"
+          name: localtime
+        env:
+        - name: hostname
+          value: "motioneye"
+
+
+

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decryption Interface</title>
+    <style>
+        body {
+            background-color: #888888; /* Grey background */
+            font-family: Arial, sans-serif;
+        }
+        #container {
+            margin: 100px auto;
+            width: 300px;
+            text-align: center;
+        }
+        .success-message {
+            color: green;
+            font-size: 20px; /* Adjusted font size for success message */
+        }
+        .error-message {
+            color: red;
+            font-size: 20px; /* Adjusted font size for error message */
+        }
+        #tokenLabel {
+            font-size: 16px; /* Adjusted font size for token label */
+        }
+        #ipAddress {
+            display: inline-block; /* Display IP address inline with other elements */
+            color: #333333; /* Color for IP address text */
+            font-size: 16px; /* Adjusted font size for IP address text */
+            margin-top: 10px; /* Adjusted margin for spacing */
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h2 id="tokenLabel">Introduce your token:</h2>
+        <input type="text" id="tokenInput">
+        <button onclick="sendToken()">Send</button>
+        <p id="errorMessage" class="error-message" style="display: none;">Invalid Token, try again</p>
+        <p id="successMessage" class="success-message" style="display: none;">Your service is now active</p>
+        <p id="ipAddress">Host IP Address: {{ host_ip }}</p>
+    </div>
+
+    <script>
+
+        function sendToken() {
+            var token = document.getElementById("tokenInput").value;
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/decrypt", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        // Decryption successful
+                        document.getElementById("errorMessage").style.display = "none";
+                        document.getElementById("successMessage").style.display = "block";
+                        document.getElementById("tokenLabel").style.display = "none";
+                        document.getElementById("tokenInput").style.display = "none";
+                        document.getElementsByTagName("button")[0].style.display = "none";
+                    } else {
+                        // Decryption failed
+                        document.getElementById("errorMessage").style.display = "block";
+                        document.getElementById("successMessage").style.display = "none";
+                    }
+                }
+            };
+            xhr.send(JSON.stringify({ token: token }));
+        }
+
+
+    </script>
+</body>
+</html>

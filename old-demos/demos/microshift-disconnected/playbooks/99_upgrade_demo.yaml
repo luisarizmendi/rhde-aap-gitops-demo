@@ -1,0 +1,124 @@
+- ansible.builtin.import_playbook: create_signed_usb.yml
+  vars:
+    encrypt: false
+    key_private: "../files/others/rhde-automation-priv.pem"
+    encryption_key: "../files/others/rhde_automation_encryption_key"
+    automation_scripts: "../files/others/upgrades/rhde-automation"
+    tmp_folder: "/tmp/rhde-usb"
+    signed_file_name: "rhde-upgrade"
+    output_content: "../files/others/upgrades/usb"   
+
+- name: "Create usb for upgrade demo"
+  hosts: image_builder
+  become: true
+  gather_facts: true
+  vars_files:
+  - ../vars/main.yml
+  vars:
+    signed_file_name: "rhde-upgrade"
+    output_content: "../files/others/upgrades/usb"   
+  tasks: 
+    - name: Copy signed scripts to both usb content dirs
+      delegate_to: localhost
+      become: false
+      shell: |
+        rm -rf ../files/others/upgrades/usb/v2/rhde
+        rm -rf ../files/others/upgrades/usb/v3/rhde
+        mkdir -p ../files/others/upgrades/usb/v2/rhde
+        mkdir -p ../files/others/upgrades/usb/v3/rhde
+        cp ../files/others/upgrades/usb/rhde/rhde-upgrade.sha256 ../files/others/upgrades/usb/v2/rhde/rhde-automation-signature.sha256
+        cp ../files/others/upgrades/usb/rhde/rhde-upgrade.tar.gz ../files/others/upgrades/usb/v2/rhde/rhde-automation.tar.gz
+        mv ../files/others/upgrades/usb/rhde/rhde-upgrade.sha256 ../files/others/upgrades/usb/v3/rhde/rhde-automation-signature.sha256
+        mv ../files/others/upgrades/usb/rhde/rhde-upgrade.tar.gz ../files/others/upgrades/usb/v3/rhde/rhde-automation.tar.gz
+        rm -rf ../files/others/upgrades/usb/rhde
+
+    # Create image v2
+    - become: true
+      ansible.builtin.import_role:
+        name: infra.osbuild.builder
+      vars:
+        builder_blueprint_import_file: "../files/others/upgrades/blueprints/blueprint-v2.toml"
+        builder_skip_repo: true
+        builder_compose_type: edge-commit
+   
+    - set_fact:
+        image_version: "0.0.2"
+
+    - shell: composer-cli compose status | grep {{ image_version }} | grep FINISHED | sort -k4M -k5d -k6n -k7n | tail -n 1 | awk '{print $1}'
+      register: image_export_id
+
+    - name: Export the compose artifact
+      infra.osbuild.export_compose:
+        compose_id: "{{ image_export_id.stdout }}"
+        dest: "/tmp/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar"
+
+    - name: Move the new repo
+      shell: "mv /tmp/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar  /var/www/html/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar"
+
+    - name: Restore context on blueprint directory
+      become: true
+      ansible.builtin.command: "restorecon -R /var/www/html/{{ builder_blueprint_name }}"
+      changed_when: true
+
+    - name: Set permissions on /var/www/html/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar
+      ansible.builtin.file:
+        path: /var/www/html/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar
+        mode: "0755"
+
+    - name: Download image
+      delegate_to: localhost
+      become: false
+      get_url:
+        url: "http://{{ ansible_host }}/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar"
+        dest: "{{ output_content }}/v2/rhde/rhde-image.tar"
+
+    - name: Remove tar file
+      ansible.builtin.file:
+        path: "/var/www/html/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar"
+        state: absent
+
+
+    # Create image v3
+    - become: true
+      ansible.builtin.import_role:
+        name: infra.osbuild.builder
+      vars:
+        builder_blueprint_import_file: "../files/others/upgrades/blueprints/blueprint-v3.toml"
+        builder_skip_repo: true
+        builder_compose_type: edge-commit
+
+    - set_fact:
+        image_version: "0.0.3"
+
+    - shell: composer-cli compose status | grep {{ image_version }} | grep FINISHED | sort -k4M -k5d -k6n -k7n | tail -n 1 | awk '{print $1}'
+      register: image_export_id
+
+    - name: Export the compose artifact
+      infra.osbuild.export_compose:
+        compose_id: "{{ image_export_id.stdout }}"
+        dest: "/tmp/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar"
+
+    - name: Move the new repo
+      shell: "mv /tmp/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar  /var/www/html/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar"
+
+    - name: Restore context on blueprint directory
+      become: true
+      ansible.builtin.command: "restorecon -R /var/www/html/{{ builder_blueprint_name }}"
+      changed_when: true
+
+    - name: Set permissions on /var/www/html/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar
+      ansible.builtin.file:
+        path: /var/www/html/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar
+        mode: "0755"
+
+    - name: Download image
+      delegate_to: localhost
+      become: false
+      get_url:
+        url: "http://{{ ansible_host }}/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar"
+        dest: "{{ output_content }}/v3/rhde/rhde-image.tar"
+
+    - name: Remove tar file
+      ansible.builtin.file:
+        path: "/var/www/html/{{ builder_blueprint_name }}/{{ builder_blueprint_name }}-{{ image_version }}.tar"
+        state: absent

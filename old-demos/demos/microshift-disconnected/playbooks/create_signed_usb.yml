@@ -1,0 +1,83 @@
+---
+- name: "Create usb with signed scripts"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+#    - name: Set variables
+#      set_fact:
+#        encrypt: false
+#        key_private: "../files/others/rhde-automation-priv.pem"
+#        encryption_key: "../files/others/rhde_automation_encryption_key"
+#        automation_scripts: "../files/others/upgrades/scripts"
+#        tmp_folder: "/tmp/rhde-usb"
+#        signed_file_name: "rhde-scripts"
+#        output_content: "../files/others/contents/usb"       
+        
+    # Clean tmp directory
+    - name: Remove temporary folder
+      file:
+        path: "{{ tmp_folder }}"
+        state: absent
+
+    - name: Create rhde-automation folder
+      file:
+        path: "{{ tmp_folder }}/rhde-automation"
+        state: directory
+
+    - name: Copy automation scripts to rhde-automation folder
+      copy:
+        src: "{{ automation_scripts }}/"
+        dest: "{{ tmp_folder }}/rhde-automation"
+
+    # Sign file
+    - name: Create signed file
+      archive:
+        path: "{{ tmp_folder }}/rhde-automation"
+        dest: "{{ tmp_folder }}/{{ signed_file_name }}.tar.gz"
+        format: gz
+
+    - name: Generate signature
+      shell: openssl dgst -sha256 -sign "{{ key_private }}" -out "{{ tmp_folder }}/{{ signed_file_name }}.sha256" "{{ tmp_folder }}/{{ signed_file_name }}.tar.gz"
+
+    - name: Create rhde directory
+      file:
+        path: "{{ tmp_folder }}/rhde"
+        state: directory
+
+    - name: Move signature file to rhde directory
+      shell: mv "{{ tmp_folder }}/{{ signed_file_name }}.sha256" "{{ tmp_folder }}/rhde/"
+
+    - name: Move signed file to rhde directory
+      shell: mv "{{ tmp_folder }}/{{ signed_file_name }}.tar.gz" "{{ tmp_folder }}/rhde/"
+
+
+
+    # Encrypt if encrypt=true and the encryption key exist
+    - name: Check if encryption key file exists
+      stat:
+        path: "{{ encryption_key }}"
+      register: key_file
+
+    - name: Encrypt file 
+      when: encrypt|default(false) and key_file.stat.exists
+      block:
+        - name: Create tar archive
+          shell: tar -C "{{ tmp_folder }}/" -cf "{{ tmp_folder }}/rhde.tar" rhde/
+
+        - name: Encrypt tar archive
+          shell: openssl enc -aes-256-cbc -salt -in "{{ tmp_folder }}/rhde.tar" -out "{{ tmp_folder }}/{{ signed_file_name }}_encrypted.tar" -pass "file:{{ encryption_key }}" -pbkdf2
+
+        - name: Copy encrypted file to USB contents
+          copy:
+            src: "{{ tmp_folder }}/{{ signed_file_name }}_encrypted.tar"
+            dest: "{{ output_content }}/{{ signed_file_name }}_encrypted.tar"
+
+    # If there is no encryption copy the sigend file only
+    - name: Copy rhde directory to USB contents
+      shell: cp -r "{{ tmp_folder }}/rhde" "{{ output_content }}/"
+      when: not encrypt|default(false) or not key_file.stat.exists|default(false)
+
+    - name: Remove temporary folder
+      file:
+        path: "{{ tmp_folder }}"
+        state: absent

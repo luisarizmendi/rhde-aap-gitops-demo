@@ -1,0 +1,17 @@
+---
+
+rhc_state: present
+
+apps:
+  app1:
+    registry: quay.io/luisarizmendi
+    image: 2048
+    prodtag: prod
+  app2:
+    registry: quay.io/luisarizmendi
+    image: simple-http
+    prodtag: prod
+
+system:
+  hostname: "demo-upgrade"
+  cdn_rhel_iso: "https://cdn.redhat.com/content/dist/rhel9/9/x86_64/baseos/iso/rhel-baseos-9.1-x86_64-boot.iso"

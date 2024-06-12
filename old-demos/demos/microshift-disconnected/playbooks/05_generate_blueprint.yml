@@ -1,0 +1,177 @@
+---
+- name: Extract container images from manifest files
+  hosts: image_builder
+  become: true
+  gather_facts: true
+  vars_files:
+  - ../vars/main.yml
+
+  vars:
+    container_images: []
+    non_empty_lines: []
+
+  tasks:
+    - name: Generate embedded container images from Manifests
+      delegate_to: localhost
+      become: false
+      block:
+      - name: Find YAML manifest files
+        find:
+          paths: ../files/manifests
+          patterns:
+            - '*.yaml'
+            - '*.yml'
+          recurse: yes
+        register: files_to_search
+
+      - name: Search for image names
+        shell: grep -E 'image:\s*(.*)$' "{{ item.path }}"
+        register: image_found
+        changed_when: false
+        ignore_errors: true
+        loop: "{{ files_to_search.files }}"
+
+      - name: Iterate over image_found results
+        set_fact:
+          non_empty_lines: "{{ non_empty_lines + item.stdout_lines }}"
+        loop: "{{ image_found.results }}"
+        when: item.stdout_lines | length > 0
+
+
+      - name: Extract container image names
+        set_fact:
+          container_images: "{{ container_images + [item | regex_replace('^.*image:\\s*(.*)$', '\\1')] }}"
+        loop: "{{ non_empty_lines }}"
+
+      - name: Detected container images in manifests
+        debug:
+          var: container_images
+ 
+      - name: Render container configuration template
+        template:
+          src: ../templates/embedded_container-images.j2
+          dest: /tmp/blueprint_embedded_container-images.toml
+
+
+    - name: Append kiosk-token container if kiosk-config is enabled
+      delegate_to: localhost
+      become: false
+      when:  kiosk_automation|default(false)
+      blockinfile:
+        path: /tmp/blueprint_embedded_container-images.toml
+        marker: ""
+        block: |
+          [[containers]]
+          source = "quay.io/luisarizmendi/kiosk-token:latest"
+
+    - name: Fetch Microshift container images
+      fetch:
+        src: /root/blueprint-microshift-embedded.toml
+        dest: /tmp/blueprint-microshift-embedded.toml
+        flat: yes
+
+
+      # IF custom RPM with manifest was created
+    - name: Include manifests rpm
+      delegate_to: localhost
+      become: false
+      when: microshift_embedded_manifests is defined and microshift_embedded_manifests is true
+      block:
+        - name: custom rpm with manifest package section
+          set_fact:
+            custom_rpm_toml: |
+              [[packages]]
+              name = "workload-manifests"
+              version = "*"
+              {% if usb_automation|default(false) %}
+              
+              [[packages]]
+              name = "usb-automation"
+              version = "*"
+              {% endif %}
+              {% if kiosk_automation|default(false) %}
+              
+              [[packages]]
+              name = "kiosk-config"
+              version = "*"
+              
+              [[packages]]
+              name = "kiosk-automation"
+              version = "*"
+
+              [[packages]]
+              name = "gdm"
+              version = "*" 
+
+              [[packages]]
+              name = "gnome-kiosk"
+              version = "*" 
+
+              [[packages]]
+              name = "gnome-kiosk-script-session"
+              version = "*"
+
+              [[packages]]
+              name = "firefox"
+              version = "*"
+              {% endif %}
+
+        - name: Get line number of first occurrence of "[customizations]"
+          shell: "grep -n 'customizations' ../files/blueprint-microshift-base.toml | cut -d: -f1 | head -n 1"
+          register: line_number_result
+
+        - name: Insert multi-line text into file
+          shell: "sed '{{ line_number_result.stdout | int - 1 }}r /dev/stdin' ../files/blueprint-microshift-base.toml > /tmp/blueprint-microshift-base-manifests.toml"
+          args:
+            stdin: "{{ custom_rpm_toml }}"
+
+
+    - name: Combine files to generate the blueprint
+      delegate_to: localhost
+      become: false
+      block:
+      - name: Read content of blueprint-microshift-base.toml
+        when: microshift_embedded_manifests is not defined or microshift_embedded_manifests is false
+        slurp:
+          src: ../files/blueprint-microshift-base.toml
+        register: blueprint_base
+
+      - name: Read content of blueprint-microshift-base.toml
+        when: microshift_embedded_manifests is defined and microshift_embedded_manifests is true
+        slurp:
+          src: /tmp/blueprint-microshift-base-manifests.toml
+        register: blueprint_base
+
+      - name: Read content of blueprint-microshift-embedded.toml
+        slurp:
+          src: /tmp/blueprint-microshift-embedded.toml
+        register: blueprint_images_microshift
+
+      - name: Read content of blueprint_embedded_container-images.toml
+        slurp:
+          src: /tmp/blueprint_embedded_container-images.toml
+        register: blueprint_images_apps
+
+      - name: Clear previous Microshift images
+        ansible.builtin.file:
+          path: ../files/blueprint-microshift-embedded.toml
+          state: absent
+    
+      - name: Append content of first file to destination file
+        lineinfile:
+          create: true
+          path: ../files/blueprint-microshift-embedded.toml
+          line: "{{ blueprint_base.content | b64decode }}"
+          insertafter: EOF
+
+      - name: Append content of second file to destination file
+        lineinfile:
+          path: ../files/blueprint-microshift-embedded.toml
+          line: "{{ blueprint_images_microshift.content | b64decode }}"
+          insertafter: EOF
+
+      - name: Append content of second file to destination file
+        lineinfile:
+          path: ../files/blueprint-microshift-embedded.toml
+          line: "{{ blueprint_images_apps.content | b64decode }}"
+          insertafter: EOF

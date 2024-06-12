@@ -1,0 +1,39 @@
+---
+service_info:
+  initial_user: ~
+  files:
+  - path: /var/opt/ipsec.secrets
+    source_path: /etc/fdo-files/var/opt/ipsec.secrets
+  - path: /var/opt/aap-eda.token
+    source_path: /etc/fdo-files/var/opt/aap-eda.token
+  - path: /var/tmp/ipsec-setup.sh
+    source_path: /etc/fdo-files/var/tmp/ipsec-setup.sh
+  commands:
+  - command: chmod
+    args:
+    - +x
+    - /var/tmp/ipsec-setup.sh
+  - command: bash
+    args:
+    - /var/tmp/ipsec-setup.sh
+    return_stdout: true
+    return_stderr: true
+  diskencryption_clevis:
+  - disk_label: {{ fdo_diskencryption_disk | default('/dev/vda4') }}
+    binding:
+      pin: {{ fdo_diskencryption_pin | default('tpm2') }}
+      config: "{}"
+    reencrypt: true
+  additional_serviceinfo: ~
+bind: "0.0.0.0:{{ fdo_serviceinfo_api_port | default('8083') }}"
+device_specific_store_driver:
+  Directory:
+    path: /etc/fdo/stores/serviceinfo_api_devices
+service_info_auth_token: {{ fdo_service_info_token | default('R3dh4t1!') }}
+admin_auth_token: {{ fdo_admin_token | default('R3dh4t1!') }}
+
+
+
+
+
+

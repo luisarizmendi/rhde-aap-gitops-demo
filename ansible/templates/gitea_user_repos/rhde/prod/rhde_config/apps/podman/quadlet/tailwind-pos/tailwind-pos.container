@@ -1,0 +1,17 @@
+[Unit]
+Description=POS
+After=local-fs.target
+
+[Service]
+TimeoutSec=300
+
+[Container]
+Image=quay.io/luisarizmendi/tailwind-pos:latest
+PublishPort=8000:80
+
+[Install]
+# Start by default on boot
+WantedBy=multi-user.target default.target
+
+
+

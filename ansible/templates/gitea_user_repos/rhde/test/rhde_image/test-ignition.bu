@@ -1,0 +1,143 @@
+variant: r4e
+version: 1.0.0
+storage:
+  files:
+    - path: /var/tmp/ipsec-conf-setup.sh
+      contents:
+        inline: |
+          #!/bin/bash
+          set -x
+
+          if rpm -q libreswan &> /dev/null; then
+
+          conn_name=$(nmcli -t -f NAME con show | head -n 1)
+          device_name=$(nmcli -t -f GENERAL.DEVICES con show "$conn_name" | head -n 1 | cut -d: -f2)
+          IP_ADDRESS=$(nmcli -t -f IP4.ADDRESS con show "$conn_name" | head -n 1 | cut -d: -f2 | cut -d/ -f1)
+          MAC_ADDRESS=$(nmcli -g GENERAL.HWADDR device show "$device_name" | tr -d '\\')
+          MAC_ADDRESS_FORMAT=$(echo "$MAC_ADDRESS" | tr -d ':')
+          IP_AAP_PRIVATE={{ aap_ip_private }}
+          IP_AAP_PUBLIC={{ eda_ip | default(ansible_host) }}
+
+          cat > /etc/ipsec.conf <<EOF
+          config setup
+              protostack=netkey
+
+          conn %default
+              ikelifetime=28800s
+              keylife=3600s
+              rekeymargin=3m
+              keyingtries=1
+              keyexchange=ike
+              ikev2=yes
+
+          conn $MAC_ADDRESS_FORMAT
+              encapsulation=yes
+              left=%defaultroute
+              leftid=$MAC_ADDRESS_FORMAT
+              right=${IP_AAP_PUBLIC}
+              rightid=${IP_AAP_PRIVATE}
+              authby=secret
+              auto=start
+              dpdaction=restart
+              dpddelay=10
+              dpdtimeout=30
+              ike=3des-sha1,aes-sha1
+              esp=aes-sha2_512+sha2_256
+              leftsubnets={192.168.0.0/16 172.16.0.0/12}
+              rightsubnet=${IP_AAP_PRIVATE}/32
+          EOF
+          fi
+      mode: 0755
+      overwrite: true
+    - path: /var/tmp/aap-auto-registration.sh
+      contents:
+        inline: |
+          #!/bin/bash
+          sleep 5
+          conn_name=$(nmcli -t -f NAME con show | head -n 1)
+          device_name=$(nmcli -t -f GENERAL.DEVICES con show "$conn_name" | head -n 1 | cut -d: -f2)
+          IP_ADDRESS=$(nmcli -t -f IP4.ADDRESS con show "$conn_name" | head -n 1 | cut -d: -f2 | cut -d/ -f1)
+          MAC_ADDRESS=$(nmcli -g GENERAL.HWADDR device show "$device_name" | tr -d '\\')
+          MAC_ADDRESS_FORMAT=$(echo "$MAC_ADDRESS" | tr -d ':')
+          USER='{{ gitea_user_name }}{{ user_number }}'
+
+          if [ -z "$IP_ADDRESS" ] || [ -z "$MAC_ADDRESS" ] || [ -z "$USER" ]; then
+              echo "One or more required variables are empty. Script failed."
+              exit 1
+          fi
+          
+          JSON="{\
+          \"ip_address\": \"$IP_ADDRESS\", \
+          \"user\": \"$USER\", \
+          \"nodename\": \"edge-$MAC_ADDRESS_FORMAT\", \
+          \"env\": \"test\" \
+          }"
+
+          source /var/opt/aap-eda.token
+
+          /usr/bin/curl -H "Authorization: Bearer $EDA_TOKEN" -H 'Content-Type: application/json' --data "$JSON" http://{{ eda_ip | default(ansible_host) }}:{{ eda_webhook_port | default('5000') }}
+      mode: 0755
+      overwrite: true
+    - path: /root/inotify-wait
+      contents:
+        inline: |
+          touch /root/inotify-wait
+      mode: 0644
+      overwrite: true
+    - path: /var/tmp/first-boot-commands.sh
+      contents:
+        inline: |
+          #!/bin/bash
+          set -x
+          bash /var/tmp/ipsec-conf-setup.sh
+          # Current fdo client tech preview has some issues with SELINUX so I disable on first boot while this is fixed
+          setenforce 0
+      mode: 0755
+      overwrite: true
+
+systemd:
+  units:
+    - name: ostree-remount.service
+      enabled: true
+    - name: aap-auto-registration.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Register to Ansible Automation Platform
+        After=network.target
+        After=connect-wifi.service
+        ConditionPathExists=!/var/tmp/aap-registered
+
+        [Service]
+        Type=simple
+        ExecStart=/bin/bash -c 'while true; do /var/tmp/aap-auto-registration.sh && /usr/bin/touch /var/tmp/aap-registered && break; done'
+
+        [Install]
+        WantedBy=default.target
+    - name: ipsec.service
+      enabled: true
+    - name: first-boot-commands.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Run commands on first boot
+        After=network.target
+
+        [Service]
+        Type=oneshot
+        ExecStart=/bin/bash -c '/var/tmp/first-boot-commands.sh'
+        RemainAfterExit=true
+
+        [Install]
+        WantedBy=multi-user.target
+    - name: fdo-client-linuxapp.service
+      dropins:
+        - name: log_trace.conf
+          contents: |
+            [Service]
+            Environment=LOG_LEVEL=trace
+
+
+
+
+

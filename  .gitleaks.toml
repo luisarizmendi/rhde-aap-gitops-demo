@@ -1,0 +1,12 @@
+[allowlist]
+  description = "Global Allowlist"
+
+  # Ignore based on any subset of the file path
+  paths = [
+
+    '''demos\/rhde-aap\/ansible\/templates\/gitea_user_repos\/rhde\/prod/rhde_image\/production-image-definition.yml$''',
+
+    '''demos\/rhde-aap\/docs\/s5-system-upgrades.md$''',
+  ]
+        
+

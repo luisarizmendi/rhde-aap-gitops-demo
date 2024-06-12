@@ -1,0 +1,651 @@
+---
+
+controller_execution_environments:
+  - name: Device Edge Execution Environment
+    image: quay.io/luisarizmendi/provisioner-execution-environment:latest
+    pull: missing
+
+controller_credential_types:
+  - name: Controller API Credentials
+    kind: cloud
+    inputs:
+      fields:
+        - id: controller_username
+          type: string
+          label: Controller API Username
+        - id: controller_password
+          type: string
+          label: Controller API Password
+          secret: true
+
+controller_hosts:
+  - name: localhost
+    inventory: Local Actions
+    variables:
+      ansible_connection: local
+      ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    enabled: true
+  - name: "{{ node_utilities_ip | default(ansible_host) }}"
+    inventory: Edge Utilities
+    variables:
+      ansible_host: "{{ node_utilities_ip | default(ansible_host) }}"
+    enabled: true
+
+
+
+controller_organizations_yaml: |-
+{% for user_number in range(1, aap_user_count + 1) %}
+  - name: "{{ aap_user_name }}{{ user_number }} Organization"
+{% endfor %}
+
+controller_users_yaml: |-
+{% for user_number in range(1, aap_user_count + 1) %}
+  - username: "{{ aap_user_name }}{{ user_number }}"
+    password: "{{ aap_user_password }}{{ user_number }}"
+    email: "{{ aap_user_name }}{{ user_number }}@dont-email.me"
+    organization: "{{ aap_user_name }}{{ user_number }} Organization"
+{% endfor %}
+
+controller_roles_yaml: |-
+{% for user_number in range(1, aap_user_count + 1) %}
+  - user: "user{{ user_number }}"
+    organization: "{{ aap_user_name }}{{ user_number }} Organization"
+    role: admin
+{% endfor %}
+
+controller_inventories_yaml: |-
+{% for user_number in range(1, aap_user_count + 1) %}
+  - name: Edge Devices
+    organization: "{{ aap_user_name }}{{ user_number }} Organization"
+    variables:
+      user_number: "{{ user_number }}"
+  - name: Edge Devices Test
+    organization: "{{ aap_user_name }}{{ user_number }} Organization"
+    variables:
+      user_number: "{{ user_number }}"
+  - name: Edge Devices Dev
+    organization: "{{ aap_user_name }}{{ user_number }} Organization"
+    variables:
+      user_number: "{{ user_number }}"
+  - name: Edge Utilities
+    organization: "{{ aap_user_name }}{{ user_number }} Organization"
+    variables:
+      user_number: "{{ user_number }}"
+  - name: Local Actions
+    organization: "{{ aap_user_name }}{{ user_number }} Organization"
+    variables:
+      user_number: "{{ user_number }}"
+  - name: Onboarding
+    organization: "{{ aap_user_name }}{{ user_number }} Organization"
+    variables:
+      user_number: "{{ user_number }}"
+{% endfor %}
+
+
+## Per User (needs specific user as controller_username, that's why variable {% raw %}{{ user_number }}{% endraw %} is included )
+
+controller_credentials:
+  - name: Gitea Credentials
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    credential_type: Source Control
+    inputs:
+      username: "{{ gitea_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+      password: "{{ gitea_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+  - name: Device Credentials
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    credential_type: Machine
+    inputs:
+      username: {{ rhde_user_name | default('admin')}}
+      password: "{{ rhde_user_password | default('R3dh4t1!') }}"
+      become_password: "{{ rhde_user_password | default('R3dh4t1!') }}"
+  - name: Controller API Credentials
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    credential_type: Controller API Credentials
+    inputs:
+      controller_username: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+      controller_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+  - name: Image Builder Credentials
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    credential_type: Machine
+    inputs:
+      username: "{{ image_builder_admin_name }}"
+      password: "{{ image_builder_admin_password }}"
+      become_password: "{{ image_builder_admin_password }}"
+
+
+controller_projects:
+  - name: Device Edge Codebase
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    scm_type: git
+    scm_branch: main
+    scm_url: http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{{ gitea_user_name }}{% raw %}{{ user_number }}{% endraw %}/{{ aap_repo_name | default('aap') }}.git
+    credential: Gitea Credentials
+
+controller_templates:
+  - name: Test Device Connectivity
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Onboarding
+    project: Device Edge Codebase
+    playbook: playbooks/hello-world.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+  - name: Initial Device Configuration
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Onboarding
+    project: Device Edge Codebase
+    playbook: playbooks/initial-configuration.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+
+  - name: Create Host in Onboarding Inventory
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Local Actions
+    project: Device Edge Codebase
+    playbook: playbooks/aap-inventory-onboarding-add.yml
+    credentials:
+      - Controller API Credentials
+    ask_variables_on_launch: true
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    extra_vars: 
+      controller_hostname: "{{ controller_hostname }}"
+      controller_username: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+      controller_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+      env: "prod"
+
+  - name: Create Host in Permanent Inventory
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Local Actions
+    project: Device Edge Codebase
+    playbook: playbooks/aap-inventory-edge_devices-add.yml
+    credentials:
+      - Controller API Credentials
+    ask_variables_on_launch: true
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    extra_vars: 
+      controller_hostname: "{{ controller_hostname }}"
+      controller_username: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+      controller_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+      env: "prod"
+
+  - name: Remove Host from Onboarding Inventory
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Local Actions
+    project: Device Edge Codebase
+    playbook: playbooks/aap-inventory-onboarding-remove.yml
+    credentials:
+      - Controller API Credentials
+    ask_variables_on_launch: true
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    extra_vars: 
+      controller_hostname: "{{ controller_hostname }}"
+      controller_username: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+      controller_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+
+
+  - name: Compose Image
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Utilities
+    project: Device Edge Codebase
+    playbook: playbooks/compose-image.yml
+    ask_variables_on_launch: true
+    credentials:
+      - Image Builder Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    extra_vars: 
+      images_repo: "rhde"
+      files_path: "prod/rhde_image"
+      image_definition_file: "production-image-definition.yml"
+      simplified_installer_definition_file: "production-fdo-definition.yml"
+      image_deploy_file: "production-deploy_version.yml"
+      builder_blueprint_name: "production-{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+      image_environment: "prod"
+
+  - name: Compose Simplified Installer
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Utilities
+    project: Device Edge Codebase
+    playbook: playbooks/compose-simplified-installer.yml
+    ask_variables_on_launch: true
+    credentials:
+      - Image Builder Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    extra_vars: 
+      images_repo: "rhde"
+      files_path: "prod/rhde_image"
+      simplified_installer_definition_file: "production-fdo-definition.yml"
+      image_deploy_file: "production-deploy_version.yml"
+      builder_blueprint_name: "production-{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+      image_environment: "prod"
+
+
+
+  - name: Create ISO Kickstart
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Utilities
+    project: Device Edge Codebase
+    playbook: playbooks/create_iso_kickstart.yml
+    ask_variables_on_launch: true
+    credentials:
+      - Image Builder Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    extra_vars:
+      iso_base: "/usr/share/rhel-iso/rhel-boot.iso"
+      kickstart_http_location: "http://{{ ansible_host }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/prod/production-kickstart.ks"
+      iso_dst_path: "/var/www/html/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+      basearch: "x86_64"
+      kickstart_name: "production-kickstart.ks"
+      image_environment: "prod"
+
+
+  - name: Publish Image
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Utilities
+    project: Device Edge Codebase
+    playbook: playbooks/publish-image.yml
+    ask_variables_on_launch: true
+    credentials:
+      - Image Builder Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    extra_vars: 
+      images_repo: "rhde"
+      files_path: "prod/rhde_image"
+      image_definition_file: "production-image-definition.yml"
+      image_deploy_file: "production-deploy_version.yml"
+      builder_blueprint_name: "production-{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+      image_environment: "prod"
+
+  - name: Publish Kickstart
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Utilities
+    project: Device Edge Codebase
+    playbook: playbooks/publish-kickstart.yml
+    ask_variables_on_launch: true
+    credentials:
+      - Image Builder Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    extra_vars: 
+      images_repo: "rhde"
+      files_path: "prod/rhde_image"
+      image_environment: "prod"
+      kickstart_name: "production-kickstart.ks"
+
+
+  - name: Publish Ignition
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Utilities
+    project: Device Edge Codebase
+    playbook: playbooks/publish-ignition.yml
+    ask_variables_on_launch: true
+    credentials:
+      - Image Builder Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    extra_vars: 
+      images_repo: "rhde"
+      files_path: "prod/rhde_image"
+      image_environment: "prod"
+      butane_name: "production-ignition.bu"
+
+
+  - name: Copy config files
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: true
+    project: Device Edge Codebase
+    playbook: playbooks/copy-os-files.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    ask_limit_on_launch: true
+    ask_variables_on_launch: true
+    extra_vars: 
+        git_repo_url: "http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/rhde"
+        git_user: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+        git_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+        path_prefix: "rhde_config"
+        env: "prod"
+        path: "os"
+
+  - name: Run Script from Gitea
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: true
+    project: Device Edge Codebase
+    playbook: playbooks/run-script.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    ask_variables_on_launch: true
+    extra_vars: 
+        script_url: "{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/rhde/raw/branch/main/prod/rhde_config/scripts/onboarding.sh"
+        git_user: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+        git_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+
+  - name: Podman Quadlet APPs Deploy
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: true
+    project: Device Edge Codebase
+    playbook: playbooks/create_quadlet.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    ask_variables_on_launch: true
+    extra_vars: 
+        git_repo_url: "http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/rhde"
+        git_user: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+        git_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+        path_prefix: "rhde_config"
+        env: "prod"
+        path: "apps/podman/quadlet"
+
+
+  - name: Microshift APP Update image tag
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: true
+    project: Device Edge Codebase
+    playbook: playbooks/update_app_microshift.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    extra_vars: 
+        namespace: namespace
+        deployment: deployment
+        container: container
+        image: image
+        tag: tag
+    ask_variables_on_launch: true
+
+  - name: Microshift APP Deploy - oc CLI
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: true
+    project: Device Edge Codebase
+    playbook: playbooks/deploy_app_microshift_oc.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    ask_variables_on_launch: true
+    extra_vars: 
+        manifest: http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/rhde/raw/branch/main/prod/rhde_config/apps/microshift/manifest/motioneye/app_motioneye-microshift.yml
+
+
+  - name: Microshift APPs Deploy - Manifest
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: true
+    project: Device Edge Codebase
+    playbook: playbooks/deploy_app_microshift_manifest.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    ask_variables_on_launch: true
+    extra_vars: 
+        git_repo_url: "http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/rhde"
+        git_user: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+        git_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+        path_prefix: "rhde_config"
+        env: "prod"
+        path: "apps/microshift/manifest"
+
+
+  - name: Microshift APPs Deploy - Helm
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: true
+    project: Device Edge Codebase
+    playbook: playbooks/deploy_app_microshift_helm.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    ask_variables_on_launch: true
+    extra_vars: 
+        helm_repo: "https://raw.githubusercontent.com/luisarizmendi/helm-chart-repo/main/packages"
+        helm_var_file: "http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/rhde/raw/branch/main/prod/rhde_config/apps/microshift/helm/wordpress/app_helm_wordpress_vars.yml"
+        git_user: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+        git_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+        helm_chart_name: "wordpress"
+        release_namespace: "wordpress"
+
+  - name: Run command
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: true
+    project: Device Edge Codebase
+    playbook: playbooks/run-command.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    ask_variables_on_launch: true
+    extra_vars: 
+        command_to_execute: date
+
+  - name: Reboot device
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    ask_inventory_on_launch: true
+    inventory: Edge Devices
+    project: Device Edge Codebase
+    playbook: playbooks/reboot-device.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+
+  - name: Wait for Microshift to be UP
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    ask_inventory_on_launch: true
+    inventory: Edge Devices
+    project: Device Edge Codebase
+    playbook: playbooks/wait-for-microshift.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+
+  - name: Run command
+    organization:  "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: true
+    project: Device Edge Codebase
+    playbook: playbooks/run-command.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    ask_variables_on_launch: true
+    extra_vars: 
+        command_to_execute: date
+
+controller_workflows:
+
+  - name: OSTree Upgrade
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    state: present
+    extra_vars: 
+        command_to_execute: rpm-ostree upgrade
+    ask_inventory_on_launch: true
+    ask_variables_on_launch: true
+    allow_simultaneous: true
+    survey_enabled: false
+    inventory: Edge Devices
+    simplified_workflow_nodes:
+      - identifier: Run command
+        unified_job_template: Run command
+        success_nodes:
+          - Reboot approval
+      - identifier: Reboot approval
+        approval_node:
+          name: Approve the reboot
+          description: Reboot the device approval
+          timeout: 0
+        success_nodes:
+          - Reboot device
+      - identifier: Reboot device
+        unified_job_template: Reboot device
+
+
+
+  - name: Provision Edge Device
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    state: present
+    allow_simultaneous: true
+    ask_inventory_on_launch: true
+    inventory: Onboarding
+    survey_enabled: false
+    ask_variables_on_launch: true
+    simplified_workflow_nodes:
+      - identifier: Create Host in Onboarding Inventory
+        unified_job_template: Create Host in Onboarding Inventory
+        success_nodes:
+          - Test Device Connectivity
+      - identifier: Test Device Connectivity
+        unified_job_template: Test Device Connectivity
+        success_nodes:
+          - Initial Device Configuration
+        failure_nodes:
+          - Remove Host from Onboarding Inventory
+      - identifier: Initial Device Configuration
+        unified_job_template: Initial Device Configuration
+        success_nodes:
+          - Configure Edge Device
+        failure_nodes:
+          - Remove Host from Onboarding Inventory
+      - identifier: Configure Edge Device
+        unified_job_template: Configure Edge Device
+        failure_nodes:
+          - Remove Host from Onboarding Inventory
+        success_nodes:
+          - Create Host in Permanent Inventory
+      - identifier: Create Host in Permanent Inventory
+        unified_job_template: Create Host in Permanent Inventory
+        success_nodes:
+          - Remove Host from Onboarding Inventory
+      - identifier: Remove Host from Onboarding Inventory
+        unified_job_template: Remove Host from Onboarding Inventory
+
+
+  - name: New Edge Device Image
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    state: present
+    allow_simultaneous: false
+    survey_enabled: false
+    ask_variables_on_launch: true
+    simplified_workflow_nodes:
+      - identifier: Compose Image
+        unified_job_template: Compose Image
+        success_nodes:
+          - Publish Image Approval
+      - identifier: Publish Image Approval
+        approval_node:
+          name: Approve the new Image
+          description: Approve this to proceed in workflow
+          timeout: 0
+        success_nodes:
+          - Publish Image
+      - identifier: Publish Image
+        unified_job_template: Publish Image
+        success_nodes:
+          - Compose Simplified Installer
+      - identifier: Compose Simplified Installer
+        unified_job_template: Compose Simplified Installer
+        success_nodes:
+          - Publish Kickstart
+      - identifier: Publish Kickstart
+        unified_job_template: Publish Kickstart
+        success_nodes:
+          - Publish Ignition
+      - identifier: Publish Ignition
+        unified_job_template: Publish Ignition
+    webhook_service: github
+
+
+
+  - name: Configure Edge Device
+    organization:  "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    state: present
+    allow_simultaneous: true
+    survey_enabled: false
+    inventory: Onboarding
+    ask_inventory_on_launch: true
+    ask_variables_on_launch: true
+    simplified_workflow_nodes:
+      - identifier: Copy config files
+        unified_job_template: Copy config files
+        success_nodes:
+          - Run Script from Gitea
+      - identifier: Run Script from Gitea
+        unified_job_template: Run Script from Gitea
+        success_nodes:
+          - Reboot device
+      - identifier: Reboot device
+        unified_job_template: Reboot device
+        success_nodes:
+          - Podman Quadlet APPs Deploy
+      - identifier: Podman Quadlet APPs Deploy
+        unified_job_template: Podman Quadlet APPs Deploy
+        success_nodes:
+          -  Wait for Microshift to be UP
+      - identifier:  Wait for Microshift to be UP
+        unified_job_template:  Wait for Microshift to be UP
+        success_nodes:
+          - Microshift APPs Deploy - Manifest
+      - identifier: Microshift APPs Deploy - Manifest
+        unified_job_template: Microshift APPs Deploy - Manifest
+    webhook_service: github
+
+
+############ EDA 
+
+eda_users_yaml: |-
+{% for user_number in range(1, aap_user_count + 1) %}
+  - username: "{{ aap_user_name }}{{ user_number }}"
+    password: "{{ aap_user_password }}{{ user_number }}"
+    email: "{{ aap_user_name }}{{ user_number }}@dont-email.me"
+    roles:
+      - Auditor
+{% endfor %}
+
+
+
+eda_credentials:
+  - name: Gitea Credentials
+    credential_type: 'GitHub Personal Access Token'
+    username: "{{ gitea_admin_name }}"
+    secret: "{{ gitea_admin_password }}"
+
+eda_projects:
+  - name: Device Edge Codebase
+    url: http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{{ gitea_admin_name }}/{{ eda_repo_name | default('eda') }}.git
+    credential: Gitea Credentials
+
+eda_user_tokens:
+  - name: Controller Token
+
+eda_rulebook_activations:
+  - name: Gitea Hook
+    description: Hook to listen for changes in Gitea
+    project: Device Edge Codebase
+    rulebook: rulebook.yml
+    decision_environment: Default Decision Environment
+    enabled: true
+    state: present
+    awx_token: Controller Token

@@ -1,0 +1,30 @@
+secrets.yml
+
+
+
+
+!**/.keep
+
+
+aap.tar.gz
+manifest.zip
+microshift-embedded-images.toml
+.terraform*
+terraform.log
+terraform.tfstate*
+
+
+
+
+# OLD demos
+old-demos/demos/microshift-disconnected/files/others/usb-contents/*
+*.pem
+rhde_automation_encryption_key
+old-demos/demos/microshift-disconnected/files/others/upgrades/usb/v2/*
+old-demos/demos/microshift-disconnected/files/others/upgrades/usb/v3/*
+
+*pull-secret*
+<<<<<<< HEAD
+bfg*
+=======
+>>>>>>> 3124880cc4a7a556ee6cdb47d18b640d41b6b009

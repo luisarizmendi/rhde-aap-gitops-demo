@@ -1,0 +1,50 @@
+name = "microshift"
+description = "demo-microshift-embedded"
+version = "0.0.2"
+modules = []
+groups = []
+distro = ""
+
+[[packages]]
+name = "autofs"
+version = "*"
+
+[[packages]]
+name = "workload-manifests"
+version = "*"
+
+[[packages]]
+name = "usb-automation"
+version = "*"
+
+[[packages]]
+name = "kiosk-config"
+version = "*"
+
+[[packages]]
+name = "kiosk-automation"
+version = "*"
+
+[[packages]]
+name = "gdm"
+version = "*" 
+
+[[packages]]
+name = "gnome-kiosk"
+version = "*" 
+
+[[packages]]
+name = "gnome-kiosk-script-session"
+version = "*"
+
+[[packages]]
+name = "zsh"
+version = "*"
+
+[customizations]
+
+[[customizations.user]]
+name = "admin"
+description = "Admin user"
+password = "$6$aX6HWT.Voy4x9byR$AHNts/pKEzNLnU6bb88Bbq52fWGYpPpXgZPFztb7ayMHkfFCkPq/NBlxBBstA9yGJPudj1unB0NFHYQ6fRKbd1"
+groups = ["users", "wheel"]

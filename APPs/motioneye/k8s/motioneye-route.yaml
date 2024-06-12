@@ -1,0 +1,12 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: portal
+  namespace: motioneye  
+spec:
+  port:
+    targetPort: 8765 
+  to:
+    kind: Service
+    name: motioneye-http-service
+    weight: 10

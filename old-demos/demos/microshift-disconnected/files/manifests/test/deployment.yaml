@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: hello
+  name: hello
+  namespace: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: hello
+    spec:
+      containers:
+      - image: quay.io/tasato/hello-js:latest
+        imagePullPolicy: IfNotPresent
+        name: hello-js
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File      
+        volumeMounts:
+        - mountPath: /mnt
+          name: my-volume
+      volumes:
+      - name: my-volume
+        persistentVolumeClaim:
+          claimName: test-app-lv-pvc        
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30

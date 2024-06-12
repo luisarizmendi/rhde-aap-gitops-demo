@@ -1,0 +1,100 @@
+---
+microshift_release: 4.14
+microshift_embedded_images: true
+microshift_embedded_manifests: true
+microshift_embedded_generate_blueprint: true
+
+usb_automation: true
+usb_content_create: true
+
+kiosk_automation: true 
+
+microshift_config_template: microshift_config.j2
+microshift_config: 
+  baseDomain: $(hostname -I | awk '{print $1}').nip.io
+  clusterNetwork: 10.42.0.0/16
+  serviceNetwork: 10.43.0.0/16
+  serviceNodePortRange: 30000-32767
+  hostnameOverride: microshift
+  nodeIP: $(hostname -I | awk '{print $1}')
+  subjectAltNames:
+    - microshift.lablocal
+    - microshift.$(hostname -I | awk '{print $1}').nip.io
+  logLevel: Normal
+
+
+#microshift_image_crio_proxy_template: crio_proxy.j2
+microshift_image_crio_proxy:
+  user: 
+  password: 
+  server: 
+  port: 
+
+
+#microshift_image_ovn_options_template: ovn_options.j2
+microshift_image_external_gateway_interface: enp1s0
+microshift_image_gateway_interface: enp1s0
+microshift_image_mtu: 1400
+
+
+microshift_image_firewall_options:
+  # network_access_to_pods (mandatory)
+  - zone: trusted
+    source: 10.42.0.0/16
+  # network_access_to_services (mandatory)
+  - zone: trusted
+    source: 169.254.169.1
+  # network_optional
+  - zone: public
+    port: 80/tcp
+  - zone: public
+    port: 443/tcp
+  - zone: public
+    port: 6443/tcp
+
+
+
+rhc_state: present
+
+builder_request_timeout: 300
+builder_wait_compose_timeout: 2400
+builder_blueprint_name: microshift-embedded
+builder_compose_type: edge-installer
+builder_pub_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+builder_skip_repo: false
+
+builder_blueprint_import_file: "../files/blueprint-microshift-embedded.toml"
+
+builder_compose_customizations:
+  installation_device: /dev/vda
+  user:
+    name: "admin"
+    description: "Admin user"
+    password: "R3dh4t1!"
+    groups: ["users", "wheel"]
+kickstart_options:
+  - lang en_US.UTF-8
+  - keyboard us
+  - timezone Etc/UTC
+  - text
+  - zerombr
+  - clearpart --all --initlabel
+  - part /boot/efi --fstype=efi --size=200
+  - part /boot --fstype=xfs --asprimary --size=800
+  - part swap --fstype=swap --recommended
+  - part /run --fstype=tmpfs --size=5120
+  - part pv.01 --grow
+  - volgroup rhel pv.01
+  - logvol / --vgname=rhel --fstype=xfs --size=20480 --name=root
+  - reboot
+  - network --bootproto=dhcp
+  - ostreesetup --nogpg --osname=rhel --remote=edge --url=file:///run/install/repo/ostree/repo --ref=rhel/9/x86_64/edge
+additional_kickstart_post:
+  - "{{ lookup('ansible.builtin.template', '../templates/firewall_options.j2') }}"
+  - "{{ lookup('ansible.builtin.template', '../templates/{{ microshift_image_ovn_options_template }}') if microshift_image_ovn_options_template is defined | default(None) }}"
+  - "{{ lookup('ansible.builtin.template', '../templates/{{ microshift_image_crio_proxy_template }}') if microshift_image_crio_proxy_template is defined | default(None) }}"
+  - "{{ lookup('ansible.builtin.template', '../templates/{{ microshift_config_template }}') if microshift_config_template is defined | default(None) }}"
+
+
+# PULL SECRET ENCRIPTED WITH ANSIBLE VAULT IN secrets.yaml using variable microshift_pull_secret
+# ansible-vault create vars/secrets.yml

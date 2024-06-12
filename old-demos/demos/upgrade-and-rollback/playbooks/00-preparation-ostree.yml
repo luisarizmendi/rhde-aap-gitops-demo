@@ -1,0 +1,127 @@
+---
+- name: "DEMO: OSTree upgrade - System preparation"
+  hosts: image_builder
+  gather_facts: true
+  vars_files:
+  - ../vars/main.yml
+  tasks:
+
+        # Install image-builder with infra.osbuild collection (https://github.com/redhat-cop/infra.osbuild)
+        - name: Prepare Image Builder server
+          become: true
+          ansible.builtin.import_role:
+            name: infra.osbuild.setup_server
+
+        # Install packages to inject kickstart
+        - name: Install additional packages
+          become: true
+          ansible.builtin.dnf:
+            state: latest
+            name: "{{ packages }}"
+          vars:
+            packages:
+            - coreutils
+            - glibc-minimal-langpack
+            - pykickstart
+            - mtools
+            - xorriso
+            - genisoimage
+            - syslinux
+            - isomd5sum
+            - lorax
+
+        - name: Set fact
+          ansible.builtin.set_fact:
+            builder_blueprint_name: demo_upgrade
+
+        # Create image v1 and update repo
+        - become: true
+          ansible.builtin.import_role:
+            name: infra.osbuild.builder
+          vars:
+            builder_skip_repo: false
+            builder_kickstart: "{{ playbook_dir }}/../templates/kickstart_demo-upgrade.j2"
+            builder_compose_type: edge-commit
+            builder_pub_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+            builder_compose_customizations:
+              user:
+                name: "admin"
+                description: "Admin user"
+                password: "R3dh4t1!"
+                key: "{{ builder_pub_key }}"
+                groups: ["users", "wheel"]
+            builder_compose_pkgs:
+              - "fuse-overlayfs"
+              - "setroubleshoot-server"
+              - "slirp4netns"
+              - "net-tools"
+              - "git"
+
+        # Create image v2 NOT UPDATING THE REPO
+        - become: true
+          ansible.builtin.import_role:
+            name: infra.osbuild.builder
+          vars:
+            builder_skip_repo: true
+            builder_kickstart: "{{ playbook_dir }}/../templates/kickstart_demo-upgrade.j2"
+            builder_compose_type: edge-commit
+            builder_pub_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+            builder_compose_customizations:
+              user:
+                name: "admin"
+                description: "Admin user"
+                password: "R3dh4t1!"
+                key: "{{ builder_pub_key }}"
+                groups: ["users", "wheel"]
+            builder_compose_pkgs:
+              - "fuse-overlayfs"
+              - "setroubleshoot-server"
+              - "slirp4netns"
+              - "net-tools"
+              - "zsh"
+
+        # Create image v3 NOT UPDATING THE REPO
+        - become: true
+          ansible.builtin.import_role:
+            name: infra.osbuild.builder
+          vars:
+            builder_skip_repo: true
+            builder_kickstart: "{{ playbook_dir }}/../templates/kickstart_demo-upgrade.j2"
+            builder_compose_type: edge-commit
+            builder_pub_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+            builder_compose_customizations:
+              user:
+                name: "admin"
+                description: "Admin user"
+                password: "R3dh4t1!"
+                key: "{{ builder_pub_key }}"
+                groups: ["users", "wheel"]
+            builder_compose_pkgs:
+              - "fuse-overlayfs"
+              - "setroubleshoot-server"
+              - "slirp4netns"
+              - "net-tools"
+              - "git"
+              - "zsh"
+
+        # Custom ISO with kernel args pointing to Kickstart (V1)
+
+        - ansible.builtin.include_tasks:
+            file: ../../../common/playbooks/inject_iso.yml
+
+        - name: Create images directory
+          become: true
+          ansible.builtin.file:
+            path: "/var/www/html/{{ builder_blueprint_name }}/images"
+            mode: 0755
+            state: directory
+
+        - name: Copy custom ISO to HTTP server
+          become: true
+          ansible.builtin.copy:
+            remote_src: true
+            src: /tmp/rhel-custom-kernelarg.iso
+            dest: "/var/www/html/{{ builder_blueprint_name }}/images/{{ builder_blueprint_name }}-custom-kernelarg.iso"
+
+        - debug:
+            msg:  "Download the ISO image from: http://{{ ansible_host }}/{{ builder_blueprint_name }}/images/{{ builder_blueprint_name }}-custom-kernelarg.iso"

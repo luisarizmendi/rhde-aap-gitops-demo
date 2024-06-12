@@ -1,0 +1,6 @@
+{%- for image_name in container_images %}
+
+[[containers]]
+source = "{{ image_name }}"
+
+{%- endfor %}

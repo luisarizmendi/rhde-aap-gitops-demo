@@ -1,0 +1,6 @@
+FROM registry.access.redhat.com/ubi8/ubi
+RUN yum -y install nginx && yum clean all
+COPY files/content/index-v2.html /usr/share/nginx/html/index.html
+ADD files/nginx.conf /etc/
+EXPOSE 8080
+CMD ["/usr/sbin/nginx", "-c", "/etc/nginx.conf"]

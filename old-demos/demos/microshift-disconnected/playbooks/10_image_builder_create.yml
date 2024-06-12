@@ -1,0 +1,68 @@
+---
+- name: "Create MicroShift embedded image"
+  hosts: image_builder
+  become: true
+  gather_facts: true
+  vars_files:
+  - ../vars/main.yml
+  tasks:
+
+######### Create image 
+        # Create microshift image
+        - ansible.builtin.import_role:
+            name: infra.osbuild.builder
+          vars:
+            builder_kickstart_options: "{{ kickstart_options }}"
+
+
+#####################
+        # For me the inject-ks module is not working: https://github.com/redhat-cop/infra.osbuild/blob/main/plugins/modules/inject_ks.py
+        # I decided to re-do it outside the role
+
+        - ansible.builtin.set_fact:
+            _efi_blueprint_name: "{{ builder_blueprint_name }}"
+            _efi_blueprint_version: "{{ builder_blueprint_output['current_version'] }}"
+            _efi_compose_type: "{{ builder_compose_type }}"
+
+        - name: Inject kickstart in EFI boot
+          shell: |
+            mkdir -p /tmp/efi-mount
+            mount -o loop /var/www/html/{{ _efi_blueprint_name }}/images/{{ _efi_blueprint_version }}/{{ _efi_blueprint_name }}_{{ _efi_compose_type }}.iso /tmp/efi-mount
+            mkdir -p /tmp/efi-iso
+            rm -rf /tmp/efi-iso/*
+            cp -r /tmp/efi-mount/* /tmp/efi-iso/
+            cd /tmp/efi-iso
+            rm -f images/efiboot.img
+            dd if=/dev/zero of=images/efiboot.img bs=1M count=10
+            mkfs.vfat -n ANACONDA images/efiboot.img
+            mkdir -p mnt
+            sudo mount images/efiboot.img mnt
+            sed -i 's/set timeout=.*/set timeout=1/g' EFI/BOOT/grub.cfg           
+            sudo cp -r  EFI mnt/
+            sudo umount mnt
+            rm -rf mnt
+            OS_LABEL=$(grep -Ri search  EFI/BOOT/grub.cfg | awk -F \' '{print $2}')
+            mkisofs -o /var/www/html/{{ _efi_blueprint_name }}/images/{{_efi_blueprint_version }}/{{ _efi_blueprint_name }}_{{ _efi_compose_type }}_custom-ks.iso -b isolinux/isolinux.bin -J -R -l -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e images/efiboot.img -no-emul-boot -graft-points -joliet-long -V "$OS_LABEL" .
+            isohybrid --uefi /var/www/html/{{ _efi_blueprint_name }}/images/{{_efi_blueprint_version }}/{{ _efi_blueprint_name }}_{{ _efi_compose_type }}_custom-ks.iso
+            implantisomd5 /var/www/html/{{ _efi_blueprint_name }}/images/{{_efi_blueprint_version }}/{{ _efi_blueprint_name }}_{{ _efi_compose_type }}_custom-ks.iso
+            umount /tmp/efi-mount
+            rm -rf /tmp/efi-iso/*
+            rm -f /var/www/html/{{ _efi_blueprint_name }}/images/{{ _efi_blueprint_version }}/{{ _efi_blueprint_name }}_{{ _efi_compose_type }}.iso 
+#####################
+
+
+
+        - name: Empty the /tmp/{{ _efi_blueprint_name }}
+          ansible.builtin.file:
+            path: "/tmp/{{ _efi_blueprint_name }}"
+            state: absent
+
+
+##################### I encourage to download the modified version *_custom-ks.iso that I created above, not the default one
+        - debug:
+            msg:  
+              - "Now:"
+              -   "1) Download the ISO image from: http://{{ ansible_host }}/{{ builder_blueprint_name }}/images/{{ builder_blueprint_output['current_version'] }}/{{ builder_blueprint_name }}_{{ builder_compose_type }}_custom-ks.iso"
+              -   "2) Use the ISO to install the edge device"
+              -   "3) SSH to the device and get the kubeconfig file located in /var/lib/microshift/resources/kubeadmin/<hostname that can be reached>/"
+                        

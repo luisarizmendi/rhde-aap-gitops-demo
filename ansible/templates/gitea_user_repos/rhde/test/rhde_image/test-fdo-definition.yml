@@ -1,0 +1,15 @@
+---
+builder_blueprint_name: test-{{ gitea_user_name }}{{ user_number }}-fdo
+builder_request_timeout: 300
+builder_wait_compose_timeout: 2400
+builder_compose_type: edge-simplified-installer
+builder_blueprint_ref: rhel/9/x86_64/edge
+builder_ostree_url: "http://{{ image_builder_ip | default(ansible_host) }}/{{  gitea_user_name }}{{ user_number  }}/test/repo"
+builder_compose_customizations:
+  installation_device: "{{ fdo_installation_device | default ('/dev/vda')}}" 
+  fdo:
+    manufacturing_server_url: "http://{{ ansible_host }}:{{ fdo_manufacturing_port | default('18080')}}"
+    diun_pub_key_insecure: "true"
+  ignition:
+    firstboot:
+      url: http://{{ image_builder_ip | default(ansible_host) }}/{{  gitea_user_name }}{{ user_number  }}/test/test-ignition.ign

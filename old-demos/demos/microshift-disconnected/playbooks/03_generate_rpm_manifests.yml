@@ -1,0 +1,117 @@
+---
+# Based on https://www.redhat.com/en/blog/how-to-create-a-fully-self-contained-os-image-that-includes-your-kubernetes-workload
+
+- name: Create RPM with the manifest and add it to Image Builder
+  hosts: image_builder
+  become: true
+  gather_facts: true
+  vars_files:
+  - ../vars/main.yml
+
+  tasks:
+    - name: Install other dependencies
+      ansible.builtin.dnf:
+        name: 
+          - rpmdevtools
+          - rpmlint
+          - yum-utils
+          - createrepo
+        state: latest
+
+    - name: Initiate the rpm build tree
+      shell: rpmdev-setuptree
+
+    - name: Copy RPM SPEC
+      copy:
+        src: ../files/workload-manifests.spec
+        dest: "~/rpmbuild/SPECS/workload-manifests.spec"
+
+########### Copy manifests
+    - name: Empty the ~/manifests folder
+      ansible.builtin.file:
+        path: "~/manifests"
+        state: absent
+
+    - name: Create the ~/manifests folder
+      ansible.builtin.file:
+        path: "~/manifests/"
+        state: directory
+
+    - name: Get list of all files in subdirectories under files/manifests
+      delegate_to: localhost
+      become: false
+      find:
+        paths: "../files/manifests"
+        recurse: yes
+        file_type: file
+      register: manifest_files
+
+    - name: Extract directory names
+      set_fact:
+        directory_names: "{{ manifest_files.files | map(attribute='path') | map('dirname') | map('basename') | unique | list }}"
+
+    - name: Create the app folders
+      ansible.builtin.file:
+        path: "~/manifests/{{ item }}"
+        state: directory
+      loop: "{{ directory_names }}"
+
+    - set_fact:
+        directory_file_names: "{{ manifest_files.files | map(attribute='path') | map('regex_replace', '^\\.\\./files/manifests/', '') | list }}"
+
+    - name: Copy files to  ~/manifests in Image Builder
+      ignore_errors: true
+      copy:
+        src: "../files/manifests/{{ item }}"
+        dest: "~/manifests/{{ item }}"
+      loop: "{{ directory_file_names }}"
+
+
+    - name: Create kustomization file
+      ansible.builtin.copy:
+        dest: ~/manifests/kustomization.yaml
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
+          resources:
+
+    - name: Add lines to kustomization file resources
+      ansible.builtin.lineinfile:
+        path: "~/manifests/kustomization.yaml"
+        line: "  - {{ item }}"
+        insertafter: EOF
+      loop: "{{ directory_file_names }}"
+
+
+###########
+
+########### Create RPM and add it to local repo
+    - name: rpm build 
+      shell: rpmbuild -bb ~/rpmbuild/SPECS/workload-manifests.spec
+
+    # TODO modify permissions to allow only image builder
+    - name: create local repo
+      shell: |
+        createrepo ~/rpmbuild/RPMS/
+        chmod a+rx ~
+
+    - name: Create repo-local-rpmbuild.toml
+      copy:
+        content: |
+          id = "local-rpm-build"
+          name = "RPMs build locally"
+          type = "yum-baseurl"
+          url = "file:///root/rpmbuild/RPMS"
+          check_gpg = false
+          check_ssl = false
+          system = false
+        dest: "repo-local-rpmbuild.toml"
+
+    - name: Add the local RPM repository to Image Builder sources
+      shell: "composer-cli sources add repo-local-rpmbuild.toml"
+
+
+########### 

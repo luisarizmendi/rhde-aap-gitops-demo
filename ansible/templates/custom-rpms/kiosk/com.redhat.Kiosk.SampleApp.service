@@ -1,0 +1,9 @@
+[Unit]
+Description=Sample Application (Kiosk mode)
+BindsTo=gnome-session.target
+After=gnome-session.target
+
+[Service]
+ExecStart=/usr/bin/kiosk-app
+Restart=always
+SendSIGHUP=true

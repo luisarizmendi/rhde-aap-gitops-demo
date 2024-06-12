@@ -1,0 +1,10 @@
+[Unit]
+Description=Token web container
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/token-web.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

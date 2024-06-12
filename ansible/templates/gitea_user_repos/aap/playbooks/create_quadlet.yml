@@ -1,0 +1,93 @@
+{% raw %}
+---
+- name: Clone GitHub Repository and Copy Files
+  hosts:
+    - all
+  gather_facts: no
+
+  vars:
+    local_clone_path: "/tmp/repo_clone"
+    _target_path: "/etc/containers/systemd"
+  tasks:
+    - name: Remove the local clone
+      file:
+        path: "{{ local_clone_path }}-{{ ansible_host }}"
+        state: absent
+
+    - name: Create temp directory
+      file:
+        path: "{{ local_clone_path }}-{{ ansible_host }}"
+        state: directory
+
+    - name: Create {{ _target_path }} directory
+      become: true
+      file:
+        path: "{{ _target_path }}"
+        state: directory
+
+
+    - name: Extract protocol from git_repo_url
+      set_fact:
+        git_repo_url_http: "{{ git_repo_url | regex_search('^(http|https)') | default('') }}"
+
+    - name: Remove protocol from git_repo_url
+      set_fact:
+        git_repo_url_nohttp: "{{ git_repo_url | regex_replace('^(http|https)://', '') }}"
+    
+
+    - name: Clone repo 
+      ansible.builtin.shell:            
+        cmd: "git clone {{ git_repo_url_http }}://{{  git_user }}:'{{ git_password }}'@{{ git_repo_url_nohttp }} {{ local_clone_path }}-{{ ansible_host }}"
+
+
+    - name: Find all files in the source directory
+      find:
+        paths: "{{ local_clone_path }}-{{ ansible_host }}/{{ env }}/{{ path_prefix }}/{{ path }}"
+        recurse: yes
+        file_type: file
+      register: found_files
+
+    - name: Copy files to the target host
+      copy:
+        src: "{{ item.path }}"
+        dest: "{{ _target_path }}/{{ item.path | basename }}"
+        remote_src: yes
+      with_items: "{{ found_files.files }}"
+
+    - name: Remove the local clone
+      file:
+        path: "{{ local_clone_path }}-{{ ansible_host }}"
+        state: absent
+
+
+    - name: Reload systemd manager
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Get list of .container files in /etc/containers/systemd/
+      find:
+        paths: /etc/containers/systemd/
+        patterns: "*.container"
+      register: container_files
+      changed_when: false
+
+    - name: Restart systemd .container files units
+      systemd:
+        name: "{{ item.path | basename | regex_replace('(.*)\\.container', '\\1.service') }}"
+        state: restarted
+      loop: "{{ container_files.files }}"
+
+    - name: Get list of .kube files in /etc/containers/systemd/
+      find:
+        paths: /etc/containers/systemd/
+        patterns: "*.kube"
+      register: kube_files
+      changed_when: false
+
+    - name: Restart systemd .kube files units
+      systemd:
+        name: "{{ item.path | basename | regex_replace('(.*)\\.kube', '\\1.service') }}"
+        state: restarted
+      loop: "{{ kube_files.files }}"
+
+{% endraw %}

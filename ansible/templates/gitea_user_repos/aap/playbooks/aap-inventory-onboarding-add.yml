@@ -1,0 +1,44 @@
+---
+
+{% raw %}
+- name: create host in controller
+  hosts:
+    - all
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    controller_validate_certs: false
+    controller_configuration_credentials_secure_logging: false
+    
+  tasks:
+    - name: set fact when needed
+      ansible.builtin.set_fact:
+        resource_state: present
+      when:
+        - resource_state is not defined
+
+    - name: Set device_inventory based on env
+      set_fact:
+        device_inventory: "{{ 'Edge Devices ' + env.capitalize() if env in ['test', 'dev'] else 'Edge Devices' }}"
+    
+    - name: Display device_inventory variable
+      debug:
+        var: device_inventory
+
+    ## Onboarding inventory
+    - name: set host facts
+      ansible.builtin.set_fact:
+        controller_hosts:
+          - name: "{{ nodename }}"
+            inventory: Onboarding
+            enabled: true
+            variables:
+              ansible_python_interpreter: "{{ ansible_playbook_python }}"
+              ansible_host: "{{ ip_address }}"
+
+    - name: Run the redhat_cop.controller_configuration.hosts role
+      ansible.builtin.include_role:
+        name: redhat_cop.controller_configuration.hosts
+
+
+{% endraw %}

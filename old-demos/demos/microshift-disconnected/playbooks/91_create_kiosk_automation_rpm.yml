@@ -1,0 +1,150 @@
+---
+- name: Create RPM with usb automation and add it to Image Builder
+  hosts: image_builder
+  become: true
+  gather_facts: true
+  vars_files:
+  - ../vars/main.yml
+  vars:
+    private_key_path: "../files/others/rhde-automation-priv.pem"
+    public_key_path: "../files/others/rhde-automation-pub.pem"
+    encryption_key_path: "../files/others/rhde_automation_encryption_key"
+  tasks:
+
+
+########### RPM build init
+
+    - name: Install other dependencies
+      ansible.builtin.dnf:
+        name: 
+          - rpmdevtools
+          - rpmlint
+          - yum-utils
+          - createrepo
+        state: latest
+
+    - name: Initiate the rpm build tree
+      shell: rpmdev-setuptree
+
+    - name: Copy RPM kiosk-config SPEC
+      copy:
+        src: ../files/kiosk-config.spec
+        dest: "~/rpmbuild/SPECS/kiosk-config.spec"
+
+    - name: Copy RPM kiosk-automation SPEC
+      copy:
+        src: ../files/kiosk-automation.spec
+        dest: "~/rpmbuild/SPECS/kiosk-automation.spec"
+
+
+
+
+
+########### Copy kiosk-config files
+
+    - name: Empty the ~/kiosk-config folder
+      ansible.builtin.file:
+        path: "~/kiosk-config"
+        state: absent
+
+    - name: Create the ~/kiosk-config folder
+      ansible.builtin.file:
+        path: "~/kiosk-config/"
+        state: directory
+
+    - name: Copy encrypted file to ~/kiosk-config 
+      ignore_errors: true
+      ansible.builtin.copy:
+        src: "../files/others/usb-contents/rhde_encrypted.tar"
+        dest: "~/kiosk-config/"
+        force: true
+
+    - name: Copy kiosk-token.service file to ~/kiosk-config 
+      ignore_errors: true
+      ansible.builtin.copy:
+        src: "../files/kiosk/kiosk-token.service"
+        dest: "~/kiosk-config/"
+        force: true
+
+
+    - name: Copy token-web.sh file to ~/kiosk-config 
+      ignore_errors: true
+      ansible.builtin.copy:
+        src: "../files/kiosk/token-web.sh"
+        dest: "~/kiosk-config/"
+        mode: u+x,g+x
+        force: true
+
+    - name: Copy deactivation-kiosk.service file to ~/kiosk-config 
+      ignore_errors: true
+      ansible.builtin.copy:
+        src: "../files/kiosk/deactivation-kiosk.service"
+        dest: "~/kiosk-config/"
+        force: true
+
+    - name: Copy deactivation_kiosk.sh file to ~/kiosk-config 
+      ignore_errors: true
+      ansible.builtin.copy:
+        src: "../files/kiosk/deactivation_kiosk.sh"
+        dest: "~/kiosk-config/"
+        mode: u+x,g+x
+        force: true
+
+    - name: Copy kiosk SOURCES file to ~/rpmbuild/SOURCES
+      ignore_errors: true
+      ansible.builtin.copy:
+        src: "../files/kiosk/SOURCES/"
+        dest: "~/rpmbuild/SOURCES"
+        force: true
+
+
+
+
+
+##### RPM build
+
+    - name: rpm build kiosk-config
+      shell: rpmbuild -bb ~/rpmbuild/SPECS/kiosk-config.spec
+
+
+
+    - name: rpm build kiosk-automation
+      shell: rpmbuild -bb ~/rpmbuild/SPECS/kiosk-automation.spec
+
+
+#### check if it exist and if created in image builder
+
+    - name: Check if repository directory exists
+      ansible.builtin.stat:
+        path: "~/rpmbuild/RPMS"
+      register: repo_directory
+
+    # TODO modify permissions to allow only image builder
+    - name: create local repo
+      shell: |
+        createrepo ~/rpmbuild/RPMS/
+        chmod a+rx ~
+      when: repo_directory.stat.exists == False
+
+    - name: Create repo-local-rpmbuild.toml
+      copy:
+        content: |
+          id = "local-rpm-build"
+          name = "RPMs build locally"
+          type = "yum-baseurl"
+          url = "file:///root/rpmbuild/RPMS"
+          check_gpg = false
+          check_ssl = false
+          system = false
+        dest: "repo-local-rpmbuild.toml"
+      when: repo_directory.stat.exists == False
+
+
+    - name: Add the local RPM repository to Image Builder sources
+      shell: "composer-cli sources add repo-local-rpmbuild.toml"
+      when: repo_directory.stat.exists == False
+
+    - name: Refresh repo
+      shell: createrepo --update /root/rpmbuild/RPMS
+      when: repo_directory.stat.exists
+

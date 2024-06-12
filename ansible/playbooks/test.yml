@@ -1,0 +1,35 @@
+---
+- name: RHDE and AAP Demo
+  hosts:
+    - edge_management
+  tasks:
+
+    - name: Install management node
+      ansible.builtin.include_role:
+        name: ../../../../roles/setup_rh_edge_mgmt_node
+      vars:
+        ### COLLECTION VARS
+        microshift: true
+        microshift_release: 4.15
+
+    - name: Config management node
+      ansible.builtin.include_role:
+        name: ../../../../roles/config_rh_edge_mgmt_node
+      vars:
+        ### COLLECTION VARS
+        image_builder_admin_name: admin
+        image_builder_admin_password: R3dh4t1!
+        image_builder_custom_rpm_files:  ../templates/custom-rpms
+        gitea_admin_repos_template: ../templates/gitea_admin_repos
+        gitea_user_repos_template: ../templates/gitea_user_repos
+        aap_config_template: ../templates/aap_config.j2
+        fdo_template: ../templates/fdo
+        aap_repo_name: aap
+#        include_image_builder: false
+#        include_fdo: false
+#        include_aap: false
+#        include_gitea: false
+#        include_vpn: false
+        ### DEMO SPECIFIC VARS
+        apps_registry: quay.io/luisarizmendi
+

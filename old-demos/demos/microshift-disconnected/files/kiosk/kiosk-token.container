@@ -1,0 +1,20 @@
+[Unit]
+Description=The kiosk container asking for a token
+After=local-fs.target
+
+[Container]
+Image=quay.io/luisarizmendi/kiosk-token:latest
+Environment=PYTHONUNBUFFERED=1
+Environment=HOST_IP=$(ip addr show $(ip link | grep DEFAULT | grep -v "ovn\|br\|cni\|ovs\|lo" | awk '{ print $2}' |  tr -d ':') | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+PublishPort=8080:8080
+SecurityLabelDisable=yes
+Volume=/usr/share:/usr/share
+Volume=/var/lib/microshift/resources/kubeadmin:/var/lib/microshift/resources/kubeadmin
+
+[Service]
+Restart=always
+
+[Install]
+# Start by default on boot
+WantedBy=multi-user.target default.target
+

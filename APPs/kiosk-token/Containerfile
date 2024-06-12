@@ -1,0 +1,28 @@
+FROM python:3.9
+
+# Install any necessary dependencies
+RUN pip install Flask
+
+# Copy all necessary files into the container
+COPY decrypt_service.py /usr/src/app/
+COPY index.html /usr/src/app/templates/
+
+# Download and copy the oc CLI executable into the container
+ADD https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz /tmp
+RUN tar -xvf /tmp/openshift-client-linux.tar.gz -C /tmp && \
+    mv /tmp/oc /usr/local/bin/ && \
+    chmod +x /usr/local/bin/oc && \
+    rm -f /tmp/openshift-client-linux.tar.gz
+
+# Change working directory to /usr/src/app
+WORKDIR /usr/src/app
+
+# Expose port 8080 for the web interface
+EXPOSE 8080
+
+# Command to run the Flask app
+CMD ["python", "decrypt_service.py"]
+
+# RUN with: podman run --security-opt label:disable  --env HOST_IP=$(ip addr show $(ip link | grep DEFAULT | grep -v "ovn\|br\|cni\|ovs\|lo" | awk '{ print $2}' |  tr -d ':') | grep -oP '(?<=inet\s)\d+(\.\d+){3}') --env PYTHONUNBUFFERED=1 -v /usr/share:/usr/share -v /var/lib/microshift/resources/kubeadmin:/var/lib/microshift/resources/kubeadmin -p 8080:8080 quay.io/luisarizmendi/kiosk-token:latest
+
+

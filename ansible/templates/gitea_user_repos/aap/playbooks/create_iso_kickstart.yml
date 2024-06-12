@@ -1,0 +1,133 @@
+ 
+---
+- name: Embed Kickstart in ISO
+  hosts:
+    - all
+  gather_facts: false 
+
+  tasks:
+    - name: Creating ISO image with kickstart embedded
+      block:
+        - name: Create directories
+          file:
+            path: "{% raw %}{{ item }}{% endraw %}"
+            state: directory
+          with_items:
+            - /home/{{ gitea_user_name }}{{ user_number }}/mnt/rhel-iso
+            - /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso
+            - /var/www/html/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/isos
+
+        - name: Restore context on directory
+          ansible.builtin.command: "restorecon -R /var/www/html/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/isos"
+          changed_when: true
+
+        - name: Mount the ISO
+          mount:
+            path: /home/{{ gitea_user_name }}{{ user_number }}/mnt/rhel-iso
+            src: "{% raw %}{{ iso_base }}{% endraw %}"
+            opts: loop
+            state: mounted
+            fstype: iso9660
+
+        - name: Copy ISO contents to temporary directory
+          shell: cp -avRf /home/{{ gitea_user_name }}{{ user_number }}/mnt/rhel-iso/* /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso
+
+        - name: Get ISO label
+          shell: blkid "{% raw %}{{ iso_base }}{% endraw %}" | awk -F 'LABEL="' '{print $2}' | cut -d '"' -f 1
+          register: iso_label
+
+
+        - name: Legacy BIOS setup
+          block:
+            - name: Modify isolinux configuration
+              replace:
+                path: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/isolinux/isolinux.cfg
+                regexp: "quiet"
+                replace: "inst.ks={% raw %}{{ kickstart_http_location }}{% endraw %}"
+
+            - name: Modify isolinux configuration
+              replace:
+                path: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/isolinux/isolinux.cfg
+                regexp: "timeout 600"
+                replace: "timeout 1"
+
+            - name: Modify isolinux configuration
+              replace:
+                path: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/isolinux/isolinux.cfg
+                regexp: "RHEL-.-.-0-BaseOS-{% raw %}{{ basearch }}{% endraw %}"
+                replace: "{% raw %}{{ iso_label.stdout }}{% endraw %}"
+
+
+        - name: UEFI setup
+          block:
+            - name: Modify grub.cfg configuration
+              replace:
+                path: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/EFI/BOOT/grub.cfg
+                regexp: "quiet"
+                replace: "inst.ks={% raw %}{{ kickstart_http_location }}{% endraw %}"
+
+            - name: Modify grub.cfg configuration
+              replace:
+                path: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/EFI/BOOT/grub.cfg
+                regexp: "set timeout=60"
+                replace: "set timeout=1"
+
+            - name: Modify grub.cfg configuration
+              replace:
+                path: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/EFI/BOOT/grub.cfg
+                regexp: "RHEL-.-.-0-BaseOS-{% raw %}{{ basearch }}{% endraw %}"
+                replace: "{% raw %}{{ iso_label.stdout }}{% endraw %}"
+
+            - name: Prepare new efiboot.img
+              ansible.builtin.shell: | 
+                rm -f images/efiboot.img
+                dd if=/dev/zero of=images/efiboot.img bs=1M count=10
+                mkfs.vfat -n ANACONDA images/efiboot.img
+              changed_when: false
+              args:
+                chdir: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/
+
+            - name: Create new efiboot.img
+              ansible.builtin.shell: |
+                mkdir -p mnt
+                mount images/efiboot.img mnt
+                cp -r EFI mnt/
+                umount mnt
+                rm -rf mnt
+              changed_when: false
+              args:
+                chdir: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/
+
+
+
+        - name: Create the final ISO image
+          shell: mkisofs -o {% raw %}{{ iso_dst_path }}/{{ image_environment }}{% endraw %}/isos/{{ gitea_user_name }}{{ user_number }}{% raw %}-{{ image_environment }}-rhel.iso{% endraw %} -b isolinux/isolinux.bin -J -R -l -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e images/efiboot.img -no-emul-boot -graft-points -joliet-long -V "{% raw %}{{ iso_label.stdout }}{% endraw %}" /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso
+          changed_when: false
+          args:
+            chdir: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/
+
+
+        - name: Make ISO hybrid for UEFI
+          ansible.builtin.shell: isohybrid --uefi {% raw %}{{ iso_dst_path }}/{{ image_environment }}{% endraw %}/isos/{{ gitea_user_name }}{{ user_number }}{% raw %}-{{ image_environment }}-rhel.iso{% endraw %}
+
+        - name: Add MD5 checksum
+          shell: implantisomd5 {% raw %}{{ iso_dst_path }}/{{ image_environment }}{% endraw %}/isos/{{ gitea_user_name }}{{ user_number }}{% raw %}-{{ image_environment }}-rhel.iso
+          changed_when: false{% endraw %}
+
+
+        - name: Unmount the file system
+          command: umount /home/{{ gitea_user_name }}{{ user_number }}/mnt/rhel-iso
+
+
+        - name: Clean up temporary directories
+          file:
+            path: "{% raw %}{{ item }}{% endraw %}"
+            state: absent
+          with_items:
+            - /home/{{ gitea_user_name }}{{ user_number }}/mnt/rhel-iso
+            - /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso
+
+
+        - ansible.builtin.debug:
+            msg: "Download the ISO from http://{{ ansible_host }}/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/isos/{{ gitea_user_name }}{{ user_number }}{% raw %}-{{ image_environment }}-rhel.iso{% endraw %}"
+      become: true

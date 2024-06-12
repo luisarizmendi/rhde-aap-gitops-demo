@@ -1,0 +1,24 @@
+{% raw %}
+---
+- name: Wait until all pods are in Ready state
+  hosts: all
+  tasks:
+    - name: Check if the kubeconfig file exists
+      become: true
+      stat:
+        path: /var/lib/microshift/resources/kubeadmin/kubeconfig
+      register: kubeconfig_stat
+
+    - name: wait for Microshift
+      when: kubeconfig_stat.stat.exists
+      block:
+
+        - name: Wait until all pods are ready
+          become: true
+          shell: |
+            wait-microshift.sh
+
+        - name: Done
+          debug:
+            msg: All Pods are Ready!
+{% endraw %}

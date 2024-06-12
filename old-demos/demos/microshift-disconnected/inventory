@@ -1,0 +1,8 @@
+---
+all:
+  hosts:
+    image_builder:
+      ansible_host: 192.168.122.215
+      ansible_port: 22
+      ansible_user: admin
+      ansible_become_password: R3dh4t1!

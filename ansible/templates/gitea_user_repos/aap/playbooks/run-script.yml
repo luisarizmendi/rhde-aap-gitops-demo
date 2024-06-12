@@ -1,0 +1,16 @@
+---
+{% raw %}
+- name: Run script from Gitea
+  hosts:
+    - all
+  tasks:
+    - name: Download script
+      shell: |
+        curl -k -o /tmp/script.sh -H "Authorization: Basic $(echo -n '{{  git_user }}:{{ git_password }}' | base64)" {{ script_url }}     
+        
+    - name: Deploy YAML files
+      become: true
+      shell: |
+        chmod +x /tmp/script.sh
+        bash /tmp/script.sh
+{% endraw %} 

@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: secret-http
+  name: secret-http
+  namespace: secret-http 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: secret-http
+  template:
+    metadata:
+      labels:
+        app: secret-http
+    spec:
+      containers:
+        - name: secret-http
+          image: quay.io/luisarizmendi/secret-http:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: username-secret
+                  key: username
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: password-secret
+                  key: password

@@ -1,0 +1,19 @@
+---
+builder_blueprint_name: test-{{ gitea_user_name }}{{ user_number }}
+builder_request_timeout: 300
+builder_wait_compose_timeout: 2400
+builder_compose_type: edge-commit
+builder_skip_repo: true
+builder_compose_pkgs:
+  - libreswan
+  - git
+  - kiosk-mode
+builder_compose_customizations:
+  user:
+    name: "{{ rhde_user_name }}"
+    description: "Admin user"{% raw %}
+    #password: "$6$3C0fNaU.aqxvP2wf$WaH5Us4KVqsEMFzXrwLqI8l0UekVvzPUEaFwqeN0BPZ3ZJDN4E7qlsXL48R9rVIdoM2q/HMOiurhHXQ9JiFV11"
+    {% endraw %}password: "{{ rhde_user_password }}"
+    groups: ["users", "wheel"]
+  firewall:
+    ports: ["22:tcp"]

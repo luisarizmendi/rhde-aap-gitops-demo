@@ -1,0 +1,19 @@
+---
+
+- name: hello world testing playbook
+  hosts:
+    - all
+  gather_facts: false
+  tasks:
+    - name: Wait for system to become reachable 
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: test connectivity
+      block:
+        - name: run the setup module
+          ansible.builtin.setup:
+      rescue:
+        - name: let the humans know I failed
+          ansible.builtin.debug:
+            msg: "Hello {{ gitea_user_name }}{{ user_number }}, I have unforunately failed to contact your edge nodes."

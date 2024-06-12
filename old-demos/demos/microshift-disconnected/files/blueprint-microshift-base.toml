@@ -1,0 +1,27 @@
+name = "microshift"
+description = "demo-microshift-embedded"
+version = "0.0.1"
+modules = []
+groups = []
+distro = ""
+
+[[packages]]
+name = "microshift"
+version = "*"
+
+[[packages]]
+name = "autofs"
+version = "*"
+
+[customizations]
+
+[[customizations.user]]
+name = "admin"
+description = "Admin user"
+password = "$6$aX6HWT.Voy4x9byR$AHNts/pKEzNLnU6bb88Bbq52fWGYpPpXgZPFztb7ayMHkfFCkPq/NBlxBBstA9yGJPudj1unB0NFHYQ6fRKbd1"
+key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCzR2ixpaJIecsCunvgJjg18NEFPPTYKewSa9eD6GMptHNYyybIqYtng/2/AsNSZ9cp54fCqt5QUIsD7OfFJQnN7/1z7sHyeEM5t2PhK1GOykq2klga//HlvCgK3DJTy9az+wq5JVyHLUZnRGtgOQRgYLox2CadThBs2aM8QwSXCDjhIjgApwEvoFuH9yRFAervBNykvIiEx+K8p1w2vkntCn8XsiuZ4xRwNuttiudysCHYq9EkdOHIEt6a+ktR7cxpD8uAoxym4UitoHynCy6Jp7Ji0GNaVNhsE9dkcXjQDmP7s+IRs7s83Om4dDpXzhTAol9++MvHsDjYtEUN5Se/N44jjwyeVXivzF7IjZg1WHJgb1gYiYRUoBhzcqzO8Vft9xdjpS8sZ/46+CQA2XPEw5uxP5iBFHgmzbOYl2GPMr67qK19gtAduXvofSMDiXGkzIPQoXn6xnQjl6QHrn/uCk1q4+76jqYZcRzGj0NNMx4Viu+zws9GLMK9M7arym8= larizmen@hal9k"
+groups = ["users", "wheel"]
+
+
+[customizations.services]
+enabled = ["microshift"]

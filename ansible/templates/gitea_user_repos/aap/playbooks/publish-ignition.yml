@@ -1,0 +1,77 @@
+ 
+---
+
+- name: Publish Ignition
+  hosts:
+    - all
+
+  tasks:
+
+    - name: Create ignition users directory if it does not exist
+      ansible.builtin.file:
+        path:  "/var/www/html/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}"
+        state: directory{% endraw %}
+
+    - name: Create tmp ignition users directory if it does not exist
+      ansible.builtin.file:
+        path:  "/tmp/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}"
+        state: directory{% endraw %}
+
+    - name: Download butane file
+      shell: |
+        curl -k -o /var/www/html/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/{% raw %}{{ butane_name }}{% endraw %} -H "Authorization: Basic $(echo -n '{{ gitea_user_name }}{{ user_number }}:{{  gitea_user_password }}{{ user_number  }}' | base64)" http://{{ ansible_host }}:{{ gitea_port | default('3000') }}/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ images_repo }}{% endraw %}/raw/branch/main/{% raw %}{{ files_path }}{% endraw %}/{% raw %}{{ butane_name }}
+      register: download_result
+      failed_when: "'404 Not Found' in download_result.stderr"
+      changed_when: download_result.stderr is not defined
+      ignore_errors: yes 
+
+{% endraw %}
+
+    - set_fact:
+        ignition_name: "{% raw %}{{ butane_name | regex_replace('\\.bu$', '.ign') }}{% endraw %}"
+
+    - name: Read the content of the downloaded file
+      slurp:
+        src: /var/www/html/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/{% raw %}{{ butane_name }}
+      register: file_content
+      when: not download_result.failed
+
+{% endraw %}
+
+
+    - name: Set a failure flag if the file content is "Not found."
+      set_fact:
+        download_failed: false
+      when: "'Not found.' not in file_content.content | b64decode"
+
+    - name: Set a failure flag if the file content is "Not found."
+      set_fact:
+        download_failed: true
+      when: "'Not found.' in file_content.content | b64decode"
+
+
+    - name: There is a butane file
+      when: not download_result.failed and not download_failed
+      block:
+        - name: Create ignition file
+          shell: |
+            butane /var/www/html/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/{% raw %}{{ butane_name }}{% endraw %} > /var/www/html/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/{% raw %}{{ ignition_name }}{% endraw %}
+
+        - name: Restore context on directory
+          ansible.builtin.command: "restorecon -R /var/www/html/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}"
+          changed_when: true
+
+        - ansible.builtin.debug:
+            msg: "The ignition file is published in http://{{ ansible_host }}/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/{% raw %}{{ butane_name | regex_replace('\\.bu$', '.ign') }}{% endraw %}"
+
+    - name: There is no butane file
+      when: download_result.failed or download_failed
+      block: 
+        - name: Delete empty downloaded file
+          ansible.builtin.file:
+            state: absent
+            path: /var/www/html/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/{% raw %}{{ butane_name }}{% endraw %}       
+
+
+
+

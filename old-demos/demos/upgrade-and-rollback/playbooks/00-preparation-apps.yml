@@ -1,0 +1,24 @@
+---
+- name: "DEMO: OSTree upgrade - APP preparation"
+  hosts: image_builder
+  gather_facts: true
+  vars_files:
+  - ../vars/main.yml
+  tasks:
+
+        - name: Install skopeo
+          become: true
+          ansible.builtin.dnf:
+            state: latest
+            name: skopeo
+
+        - name: Copy APP image files to my registry
+          shell: |
+            skopeo login -u {{ registry_user }} -p {{ registry_password }} {{ apps.app1.registry }}
+            skopeo copy docker://quay.io/luisarizmendi/2048:v1 docker://{{ apps.app1.registry }}/{{ apps.app1.image }}:v1
+            skopeo copy docker://quay.io/luisarizmendi/2048:v2 docker://{{ apps.app1.registry }}/{{ apps.app1.image }}:v2
+            skopeo copy docker://quay.io/luisarizmendi/2048:v3 docker://{{ apps.app1.registry }}/{{ apps.app1.image }}:v3
+            skopeo copy docker://quay.io/luisarizmendi/2048:prod docker://{{ apps.app1.registry }}/{{ apps.app1.image }}:{{ apps.app1.prodtag }}
+            skopeo copy docker://quay.io/luisarizmendi/simple-http:v1 docker://{{ apps.app2.registry }}/{{ apps.app2.image }}:v1
+            skopeo copy docker://quay.io/luisarizmendi/simple-http:v2 docker://{{ apps.app2.registry }}/{{ apps.app2.image }}:v2
+            skopeo copy docker://quay.io/luisarizmendi/simple-http:prod docker://{{ apps.app2.registry }}/{{ apps.app2.image }}:{{ apps.app1.prodtag }}

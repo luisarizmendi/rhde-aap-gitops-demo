@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: app2048
+  name: app2048
+  namespace: app2048 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app2048
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: app2048
+    spec:
+      containers:
+      - image: quay.io/luisarizmendi/2048:prod
+        imagePullPolicy: IfNotPresent
+        name: app2048
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File           
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30

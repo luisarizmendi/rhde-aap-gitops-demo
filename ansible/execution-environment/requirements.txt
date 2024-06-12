@@ -1,0 +1,9 @@
+ansible-core>=2.13.9
+boto3
+netaddr
+passlib
+requests
+ipaddr
+kubernetes
+pyYAML
+jsonpatch
