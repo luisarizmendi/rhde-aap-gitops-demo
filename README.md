@@ -46,7 +46,7 @@ The VPN connection is optional, it's pre-configured and will be setup if you dep
 
   >**Note**
   >
-  > In order to connect a machine in the local network to the remote node using the already pre-configured VPN, you will need to use a local subnet contained in `192.168.0.0/16` or `172.16.0.0/12`. It is *very important* that if you are deploying the edge management server locally and you are using a network in that range, that you do DON'T deploy the edge server with the VPN active (that means including the `libreswan` package in the image definition) because there will be routing issues in that case.
+  > In order to connect a machine in the local network to the remote node using the already pre-configured VPN, you will need to use a local subnet contained in `192.168.0.0/16` or `172.16.0.0/12`. It is *very important* that if you are deploying the edge management server locally and you are using a network in that range you don't enable the VPN on the server (`include_vpn: false` variable while deploying the lab) or if the VPN is enabled that you don't deploy the edge server with the VPN active (that means not including the `libreswan` package in the image definition) because there will be routing issues in that case.
 
 ## Recommended Hardware
 
@@ -85,7 +85,7 @@ The lab architecture has been designed so you can deploy it where you don't have
 
   >**Note**
   >
-  > REMEMBER: In order to connect a machine in the local network to the remote node using the already pre-configured VPN, you will need to use a local subnet contained in `192.168.0.0/16` or `172.16.0.0/12`. It is *very important* that if you are deploying the edge management server locally and you are using a network in that range, that you do DON'T deploy the edge server with the VPN active (that means including the `libreswan` package in the image definition) because there will be routing issues in that case.
+  > REMEMBER: In order to connect a machine in the local network to the remote node using the already pre-configured VPN, you will need to use a local subnet contained in `192.168.0.0/16` or `172.16.0.0/12`. It is *very important* that if you are deploying the edge management server locally and you are using a network in that range you don't enable the VPN on the server (`include_vpn: false` variable while deploying the lab) or if the VPN is enabled that you don't deploy the edge server with the VPN active (that means not including the `libreswan` package in the image definition) because there will be routing issues in that case.
 
 ## Pre-recorded video
 

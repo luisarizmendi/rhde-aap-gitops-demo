@@ -226,6 +226,20 @@ controller_templates:
 
 
 
+  - name: Get list of Microshift offline images
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Utilities
+    project: Device Edge Codebase
+    playbook: playbooks/get_microshift_offline_images.yml
+    credentials:
+      - Image Builder Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    extra_vars: 
+      offline_images_toml: "/opt/files/blueprint-microshift-embedded.toml"
+     
+
+
   - name: Create ISO Kickstart
     organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
     inventory: Edge Utilities

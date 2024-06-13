@@ -161,6 +161,10 @@ For `production-kickstart.ks`:
 
   >**Note**
   >
+  > It is *very important* that if you are deploying the edge management server locally and you are using a network in that range you don't enable the VPN on the server (`include_vpn: false` variable while deploying the lab) or if the VPN is enabled that you don't deploy the edge server with the VPN active (that means not including the `libreswan` package in the image definition) because there will be routing issues in that case.
+
+  >**Note**
+  >
   > In order to connect a machine in the local network to the remote node you will need to use a local subnet contained in `192.168.0.0/16` or `172.16.0.0/12`
 
 * It creates a script for AAP auto-registration, so the new device is included in the AAP inventory directly without human intervention 
