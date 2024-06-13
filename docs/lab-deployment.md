@@ -405,9 +405,9 @@ The demo will need to create at least three OS images  (take a look at [minute 4
 2. The upgraded image without some of the required packages by Greenboot
 3. The upgraded image but including the required packages
 
-By default, when you "publish" an image the last one that you created is the one that is used. That behaviour can be changed by changing the value `latest` to the version that you want to publish in the `device-edge-images/production-image-deploy.yml` file located Gitea, so you could change that to `0.0.1`, then create the first image with the provided blueprint (just create, you don't need to publish until you run the demo), then create the second and third images using the v2 and v3 blueprints.
+By default, when you "publish" an image the last one that you created is the one that is used. That behaviour can be changed by changing the value `latest` to the version that you want to publish in the `device-edge-images/prod-image-deploy.yml` file located Gitea, so you could change that to `0.0.1`, then create the first image with the provided blueprint (just create, you don't need to publish until you run the demo), then create the second and third images using the v2 and v3 blueprints.
 
-Then, during the demo, you can just use the "Publish" task. After showing the onboarding, change the  `device-edge-images/production-image-deploy.yml` file to version 0.0.2 in order to publish the second image (that was already created in the pre-demo steps) and then do the same with the third image.
+Then, during the demo, you can just use the "Publish" task. After showing the onboarding, change the  `device-edge-images/prod-image-deploy.yml` file to version 0.0.2 in order to publish the second image (that was already created in the pre-demo steps) and then do the same with the third image.
 
 
 

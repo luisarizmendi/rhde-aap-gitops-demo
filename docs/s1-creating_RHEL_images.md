@@ -20,13 +20,13 @@ Inside `rhde` repository you will find that three directories have been created 
 
 The Image definitions are under `rhde_image` directory. If you review the `prod` directory, you will find three files:
 
-* `production-image-definition.yml`: This is the descriptor that will generate the image Blueprint and commit that Blueprint in the Image Builder service to generate the new Red Hat Device Edge image. The file is actually the vars for the [Osbuild Composer Ansible Collection](https://github.com/redhat-cop/infra.osbuild).
+* `prod-image-definition.yml`: This is the descriptor that will generate the image Blueprint and commit that Blueprint in the Image Builder service to generate the new Red Hat Device Edge image. The file is actually the vars for the [Osbuild Composer Ansible Collection](https://github.com/redhat-cop/infra.osbuild).
 
 
-* `production-deploy_version.yml`: This is a workaround to save some during Section 5. If you want to know more now about this just take a look at  [TIP: Reducing the demo/workshop time by pre-creating images in advance](s5-system-upgrades.md#tip-reducing-the-demo-time-by-pre-creating-images-in-advance). This is not needed at this moment.
+* `prod-deploy_version.yml`: This is a workaround to save some during Section 5. If you want to know more now about this just take a look at  [TIP: Reducing the demo/workshop time by pre-creating images in advance](s5-system-upgrades.md#tip-reducing-the-demo-time-by-pre-creating-images-in-advance). This is not needed at this moment.
 
 
-* `production-kickstart.ks`: In this demo/workshop the onboarding is performed by running post-deployment steps launched by a Kickstart file. FIDO Device Onboarding Specification could be used for a more secure onboarding experience but that's out of the scope of the demo. If you want to play with FDO you can follow the [Secure Edge device onboarding with RHEL and FDO](https://github.com/luisarizmendi/edge-demos/blob/main/demos/rhel-fdo-onboarding/README.md) self-paced workshop or build the [Red Hat Device Edge - FDO Secure Onboarding and the Realtime Kernel](https://github.com/redhat-manufacturing/device-edge-workshops/tree/main/exercises/rhde_fdo_rtk) lab.
+* `prod-kickstart.ks`: In this demo/workshop the onboarding is performed by running post-deployment steps launched by a Kickstart file. FIDO Device Onboarding Specification could be used for a more secure onboarding experience but that's out of the scope of the demo. If you want to play with FDO you can follow the [Secure Edge device onboarding with RHEL and FDO](https://github.com/luisarizmendi/edge-demos/blob/main/demos/rhel-fdo-onboarding/README.md) self-paced workshop or build the [Red Hat Device Edge - FDO Secure Onboarding and the Realtime Kernel](https://github.com/redhat-manufacturing/device-edge-workshops/tree/main/exercises/rhde_fdo_rtk) lab.
 
 
 2. Open the Gitea repository Settings (top right, under the "fork" number). Then jump into the "Webhooks" section. There you will see that there is a webhook configured that, when pushing changes into the repository, will contact the Event Driven Automation (EDA) service, which will be listening and if certain paramenters are fullfil in its filters, it will lauch Jobs and Workflows directly into Ansible Automation Platform (AAP).
@@ -39,7 +39,7 @@ The Image definitions are under `rhde_image` directory. If you review the `prod`
 
   >**Note**
   >
-  > This first time we will take this approach (clone the repo in our laptop) because we will need to modify two files (`production-image-definition.yml` and `production-kickstart.ks`) to prepare and publish our image. If we were using the Gitea Web to modify the files we will need to do it sequentially (you cannot modify two files and push the changes, you need to modify-push and then modify-push). That would mean that we will activate the " New Edge Device Image" Workflow Job (which involves "Compose Image" and "Publish Image" Jobs as we will see below ) when we modify the `production-image-definition.yml` and we will trigger again the "Publish Image" Job when we modify the `production-kickstart.ks` file.
+  > This first time we will take this approach (clone the repo in our laptop) because we will need to modify two files (`prod-image-definition.yml` and `prod-kickstart.ks`) to prepare and publish our image. If we were using the Gitea Web to modify the files we will need to do it sequentially (you cannot modify two files and push the changes, you need to modify-push and then modify-push). That would mean that we will activate the " New Edge Device Image" Workflow Job (which involves "Compose Image" and "Publish Image" Jobs as we will see below ) when we modify the `prod-image-definition.yml` and we will trigger again the "Publish Image" Job when we modify the `prod-kickstart.ks` file.
 
 We need to update the image definition, we could, for example, include a new package, let's say `bind-utils`. We just need to clone the repo, update the file and push the changes:
 
@@ -71,11 +71,11 @@ Resolving deltas: 100% (10/10), done.
 
 ```
 
-* Move into the directory and edit the `production-image-definition.yml` adding `bind-utils` in the `builder_compose_pkgs` section:
+* Move into the directory and edit the `prod-image-definition.yml` adding `bind-utils` in the `builder_compose_pkgs` section:
 
 ```bash
 larizmen@hal9k:/tmp/demo$ cd rhde/
-larizmen@hal9k:/tmp/demo/rhde$ vi prod/rhde_image/production-image-definition.yml
+larizmen@hal9k:/tmp/demo/rhde$ vi prod/rhde_image/prod-image-definition.yml
 ```
 
 * Push changes
@@ -135,9 +135,9 @@ You can go to "Image Builder" and click on "Images" so you can see how the new i
   > You might need to enable the privilege view (`sudo`) by clicking in "Limited access" lock icon on the top right. You might also need to click on the "Start Socket" and then refresh your Web Browser.
 
 
-7. Go to Gitea again and review the `production-kickstart.ks` and `production-image-definition.yml` that we used to create the image. You can mention this about the files:
+7. Go to Gitea again and review the `prod-kickstart.ks` and `prod-image-definition.yml` that we used to create the image. You can mention this about the files:
 
-For `production-image-definition.yml`:
+For `prod-image-definition.yml`:
 
 * Microshift is enabled in the image. The Microshift package needs the admin to enable two additional repositories. 
 
@@ -153,7 +153,7 @@ The Ansible playbooks that installed the lab already enabled these repositories 
 * The image descriptor also enables by default the Systemd unit for Microshift
 
 
-For `production-kickstart.ks`:
+For `prod-kickstart.ks`:
 
 * The kickstart will launch the OSTree image deployment as you can see in the `ostreesetup` line at the beginning. That line points to where the OSTRee image will be published, in our case `http://<edge-management-server-ip>/user1/prod/repo`
 

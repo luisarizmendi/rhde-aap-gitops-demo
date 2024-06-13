@@ -42,10 +42,10 @@ This is the summary of the demo steps:
     1. Open Gitea and review the `device-edge-images` repository files
     2. Open Gitea webhook settings
     3. Open "Jobs" page in AAP and keep it visible
-    4. Push `rhde/prod/rhde_image/production-image-definition.yml` and `rhde/prod/rhde_image/production-kickstart.ks` files
+    4. Push `rhde/prod/rhde_image/prod-image-definition.yml` and `rhde/prod/rhde_image/prod-kickstart.ks` files
     5. Show the "New Edge Device Image" Workflow at the AAP
     6. Open the Image Builder Cockpit Web console and check that the image is being created
-    7. Describe the `rhde/prod/rhde_image/production-image-definition.yml` and `rhde/prod/rhde_image/production-kickstart.ks` that you used to create the image
+    7. Describe the `rhde/prod/rhde_image/prod-image-definition.yml` and `rhde/prod/rhde_image/prod-kickstart.ks` that you used to create the image
     8. Go to the "New Edge Device Image" workflow in AAP and Approve the Image Publishing
     9. Open the ostree-repo contents published, including `kickstarts` and the `repos` directories in `http://<edge-management-server-ip>/<user>/prod/`.
 
@@ -177,7 +177,7 @@ This is the summary of the demo steps:
 
 * Go to Gitea in the edge management host at port `3000`
 * Log in as a user (by default `user<number>`/`password<number>`)
-* Modify the file in `rhde/prod/rhde_image/production-image-definition.yml`. You can include the `bind-utils` package
+* Modify the file in `rhde/prod/rhde_image/prod-image-definition.yml`. You can include the `bind-utils` package
 
 ### 2 - Check that an Ansible Workflow automatically starts and build the new image
 

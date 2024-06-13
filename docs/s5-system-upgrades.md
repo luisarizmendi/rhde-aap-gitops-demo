@@ -27,11 +27,11 @@ Note: --check and --preview may be unreliable.  See https://github.com/coreos/rp
 No updates available
 ```
 
-2. Open `rhde/prod/rhde_image/production-image-definition.yaml` in Gitea and review the `builder_compose_pkgs` packages. Remove the custom rpm `inotify-gitops` package (which will remove also the `python3-inotify` dependancy) and, if you want, the `kiosk-mode` package too. You can include an additional package (ie. `zsh`) to the definition, so we are simulating that someone wants to add a package but, when he reviews the image definition, he thinks that the `inotify-gitops` package can be safely removed (which is not the case) too.
+2. Open `rhde/prod/rhde_image/prod-image-definition.yaml` in Gitea and review the `builder_compose_pkgs` packages. Remove the custom rpm `inotify-gitops` package (which will remove also the `python3-inotify` dependancy) and, if you want, the `kiosk-mode` package too. You can include an additional package (ie. `zsh`) to the definition, so we are simulating that someone wants to add a package but, when he reviews the image definition, he thinks that the `inotify-gitops` package can be safely removed (which is not the case) too.
 
 ```bash
 ---
-builder_blueprint_name: production-user1
+builder_blueprint_name: prod-user1
 builder_request_timeout: 300
 builder_wait_compose_timeout: 2400
 builder_compose_type: edge-commit
@@ -253,7 +253,7 @@ AvailableUpdate:
 
 ```bash
 ---
-builder_blueprint_name: production-user1
+builder_blueprint_name: prod-user1
 builder_request_timeout: 300
 builder_wait_compose_timeout: 2400
 builder_compose_type: edge-commit
@@ -300,12 +300,12 @@ builder_compose_customizations:
 
 Creating those two additional images takes time. If you feel that you cannot fill that time with something useful or you think you won't have time to invest on that activity you can pre-create the images thanks to a trick that was introduced in the lab when it was deployed.
 
-If you check `rhde/prod/rhde_image/production-image-deploy.yml` file in Gitea you can see that, by default, we are "publishing" the last image created by the image builder, but we can change the behaviour following this steps:
+If you check `rhde/prod/rhde_image/prod-image-deploy.yml` file in Gitea you can see that, by default, we are "publishing" the last image created by the image builder, but we can change the behaviour following this steps:
 
 1. Create the base image (Section 1)
 2. Create the upgrade where we remove `pyhton-inotify` and add `zsh`. You can use the "Compose Image" or just use the GitOps approach or the Workflow without approving the publishing (it's just to save time, it does not affect if you publish in any case)
 3. Create the second upgrade where we include `pyhton-inotify` again
-4. Change the `rhde/prod/rhde_image//production-image-deploy.yml` to `production_image_version: "0.0.1"`. That will trigger the "Publish Image" Job in AAP.
+4. Change the `rhde/prod/rhde_image//prod-image-deploy.yml` to `production_image_version: "0.0.1"`. That will trigger the "Publish Image" Job in AAP.
 
 At that time you will have the base image published. You can go through the different Sections and now, when you reach this Section where you have to perform the upgrade you can just change to `production_image_version: "0.0.2"` and that will publish the second image (first upgrade without `pyhton-inotify`) without having to create the image, because it's already there in the system. You can repeat that step with `production_image_version: "0.0.3"` for the final image.
 

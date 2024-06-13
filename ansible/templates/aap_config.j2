@@ -200,10 +200,10 @@ controller_templates:
     extra_vars: 
       images_repo: "rhde"
       files_path: "prod/rhde_image"
-      image_definition_file: "production-image-definition.yml"
-      simplified_installer_definition_file: "production-fdo-definition.yml"
-      image_deploy_file: "production-deploy_version.yml"
-      builder_blueprint_name: "production-{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+      image_definition_file: "prod-image-definition.yml"
+      simplified_installer_definition_file: "prod-fdo-definition.yml"
+      image_deploy_file: "prod-deploy_version.yml"
+      builder_blueprint_name: "prod-{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
       image_environment: "prod"
 
   - name: Compose Simplified Installer
@@ -219,12 +219,25 @@ controller_templates:
     extra_vars: 
       images_repo: "rhde"
       files_path: "prod/rhde_image"
-      simplified_installer_definition_file: "production-fdo-definition.yml"
-      image_deploy_file: "production-deploy_version.yml"
-      builder_blueprint_name: "production-{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+      simplified_installer_definition_file: "prod-fdo-definition.yml"
+      image_deploy_file: "prod-deploy_version.yml"
+      builder_blueprint_name: "prod-{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
       image_environment: "prod"
 
 
+
+  - name: Get list of Microshift offline images
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Utilities
+    project: Device Edge Codebase
+    playbook: playbooks/get_microshift_offline_images.yml
+    credentials:
+      - Image Builder Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    extra_vars: 
+      offline_images_toml: "/opt/files/blueprint-microshift-embedded.toml"
+     
 
 
   - name: Create ISO Kickstart
@@ -239,10 +252,10 @@ controller_templates:
     become_enabled: true
     extra_vars:
       iso_base: "/usr/share/rhel-iso/rhel-boot.iso"
-      kickstart_http_location: "http://{{ ansible_host }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/prod/production-kickstart.ks"
+      kickstart_http_location: "http://{{ ansible_host }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/prod/prod-kickstart.ks"
       iso_dst_path: "/var/www/html/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
       basearch: "x86_64"
-      kickstart_name: "production-kickstart.ks"
+      kickstart_name: "prod-kickstart.ks"
       image_environment: "prod"
 
 
@@ -259,9 +272,9 @@ controller_templates:
     extra_vars: 
       images_repo: "rhde"
       files_path: "prod/rhde_image"
-      image_definition_file: "production-image-definition.yml"
-      image_deploy_file: "production-deploy_version.yml"
-      builder_blueprint_name: "production-{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+      image_definition_file: "prod-image-definition.yml"
+      image_deploy_file: "prod-deploy_version.yml"
+      builder_blueprint_name: "prod-{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
       image_environment: "prod"
 
   - name: Publish Kickstart
@@ -278,7 +291,7 @@ controller_templates:
       images_repo: "rhde"
       files_path: "prod/rhde_image"
       image_environment: "prod"
-      kickstart_name: "production-kickstart.ks"
+      kickstart_name: "prod-kickstart.ks"
 
 
   - name: Publish Ignition
@@ -295,7 +308,7 @@ controller_templates:
       images_repo: "rhde"
       files_path: "prod/rhde_image"
       image_environment: "prod"
-      butane_name: "production-ignition.bu"
+      butane_name: "prod-ignition.bu"
 
 
   - name: Copy config files
