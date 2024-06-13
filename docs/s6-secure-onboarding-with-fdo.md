@@ -45,8 +45,26 @@
 
 9. SSH to the Edge Server and show the different `/etc/fdo/stores/` directories. Explain that for this demo FDO is configured to auto-approve the onboarding but you can also control what devices will be accepted by changing the `report_to_rendezvous_endpoint_enabled` parameter to `false` in the `/etc/fdo/owner-onboarding-server.conf.d/owner-onboarding-server.yml` configuration file what will make necessary to manually copy the vouchers in `/etc/fdo/stores/owner_vouchers/` to the `/etc/fdo/stores/rendezvous_registered/` directory to accept the device (an ansible playbook run by AAP can also be configured).
 
+10. (optional) You can also run `lsblk` and show the luks encryption in the disk also performed by the fdo client following the config sent by the FDO server ()`/etc/fdo/serviceinfo-api-server.conf.d/serviceinfo-api-server.yml`).
 
-
+```bash
+[root@edge-5254003D5080 ~]# lsblk 
+NAME                                          MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
+sr0                                            11:0    1 1024M  0 rom   
+vda                                           252:0    0   20G  0 disk  
+├─vda1                                        252:1    0    1M  0 part  
+├─vda2                                        252:2    0  127M  0 part  /boot/efi
+├─vda3                                        252:3    0  384M  0 part  /boot
+└─vda4                                        252:4    0 19.5G  0 part  
+  └─luks-8203001f-85f9-499c-aa11-d526d8ee3b21 253:0    0 19.5G  0 crypt 
+    └─rootvg-rootlv                           253:1    0    9G  0 lvm   /var/lib/containers/storage/overlay
+                                                                        /var
+                                                                        /sysroot/ostree/deploy/redhat/var
+                                                                        /usr
+                                                                        /etc
+                                                                        /
+                                                                        /sysroot
+```
 
 
 
