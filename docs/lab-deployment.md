@@ -39,6 +39,10 @@ After the deployment you will have the following running sevices at the Edge Man
 * Cockpit: 9090
 * Gitea: 3000
 
+  >**Note**
+  >
+  > As part of this lab we are not deploying any secret manager service integraged with Ansible Automation Platform, so you will find some variables containing passwords in plain text in several Jobs, but it is important to mention that in production that won't be the case
+
 
 
 ## Prepare your environment

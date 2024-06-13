@@ -46,6 +46,15 @@ storage:
               leftsubnets={192.168.0.0/16 172.16.0.0/12}
               rightsubnet=${IP_AAP_PRIVATE}/32
           EOF
+
+          # Add masquerade rule for the private IP
+          firewall-cmd --permanent --zone=public --add-masquerade
+
+          # Add forwarding rules using direct rules
+          firewall-cmd --permanent --direct --add-rule ipv4 nat POSTROUTING 0 -s ${IP_AAP_PRIVATE}/32 -d 192.168.0.0/16 -j MASQUERADE
+          firewall-cmd --permanent --direct --add-rule ipv4 nat POSTROUTING 0 -s ${IP_AAP_PRIVATE}/32 -d 172.16.0.0/12 -j MASQUERADE
+          firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 0 -s ${IP_AAP_PRIVATE}/32 -d 192.168.0.0/16 -j ACCEPT
+          firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 0 -s ${IP_AAP_PRIVATE}/32 -d 172.16.0.0/12 -j ACCEPT
           fi
       mode: 0755
       overwrite: true
@@ -89,9 +98,23 @@ storage:
         inline: |
           #!/bin/bash
           set -x
+          if rpm -q libreswan &> /dev/null; then
           bash /var/tmp/ipsec-conf-setup.sh
+          fi
           # Current fdo client tech preview has some issues with SELINUX so I disable on first boot while this is fixed
           setenforce 0
+          if rpm -q microshift &> /dev/null; then
+          ######### MICROSHIFT
+          # Configure the firewall with the mandatory rules for MicroShift
+          firewall-cmd --permanent --zone=trusted --add-source=10.42.0.0/16
+          firewall-cmd --permanent --zone=trusted --add-source=169.254.169.1
+          firewall-cmd --permanent --zone=public --add-port=80/tcp
+          firewall-cmd --permanent --zone=public --add-port=443/tcp
+          firewall-cmd --permanent --zone=public --add-port=6443/tcp
+
+          # Reload firewall configuration to apply changes
+          firewall-cmd --reload
+          fi
       mode: 0755
       overwrite: true
 

@@ -1,25 +1,7 @@
 ---
-builder_blueprint_name: prod-{{ gitea_user_name }}{{ user_number }}
+builder_blueprint_name: dev-{{ gitea_user_name }}{{ user_number }}
 builder_request_timeout: 300
 builder_wait_compose_timeout: 2400
-builder_compose_type: edge-commit
-builder_skip_repo: true
-builder_compose_pkgs:
-  - libreswan
-  - microshift
-  - microshift-olm
-  - wait-microshift
-  - "git"
-  - kiosk-mode
-builder_compose_customizations:
-  user:
-    name: "{{ rhde_user_name }}"
-    description: "Admin user"{% raw %}
-    #password: "$6$3C0fNaU.aqxvP2wf$WaH5Us4KVqsEMFzXrwLqI8l0UekVvzPUEaFwqeN0BPZ3ZJDN4E7qlsXL48R9rVIdoM2q/HMOiurhHXQ9JiFV11"
-    {% endraw %}password: "{{ rhde_user_password }}"
-    groups: ["users", "wheel"]
-  services:
-    enabled: ["microshift"]
-  firewall:
-    ports: ["22:tcp", "80:tcp", "443:tcp", "6443:tcp", "5353:udp", "30000-32767:tcp", "30000-32767:udp"]
-
+builder_compose_type: edge-installer
+builder_skip_repo: false
+builder_blueprint_import_file: "dev-image-blueprint.toml"

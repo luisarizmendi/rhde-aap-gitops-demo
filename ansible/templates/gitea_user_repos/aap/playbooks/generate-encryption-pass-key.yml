@@ -1,0 +1,77 @@
+{% raw %}
+---
+- name: Generate Encryption pass and key
+  hosts:
+    - all
+  tasks:
+
+    - name: Create encryption and signature keys 
+      delegate_to: localhost
+      become: false
+      block:
+        # Only 5 characters so it's easy to type on the console for the manual-input workflow
+      - name: Generate encryption key
+        shell: "openssl rand -base64 5 > {{ _local_encryption_pass_path | default('/tmp/encryption_pass') }}"
+
+      - name: Check if RSA keys exist
+        stat:
+          path: "{{ item }}"
+        loop:
+          - "{{ private_key_path | default('/tmp/encryption_privatekey')  }}"
+          - "{{ public_key_path | default('/tmp/encryption_publickey')  }}"
+        register: rsa_key_stat
+
+      - name: If none or just one key exist, remove and re-create
+        when: rsa_key_stat.results | map(attribute='stat.exists') | select | list | length != 2
+        block:
+          - name: Delete RSA keys if any does not exist or none exist
+            ignore_errors: true
+            file:
+              path: "{{ item.item }}"
+              state: absent
+            loop: "{{ rsa_key_stat.results }}"
+
+          - name: Generate RSA private key
+            shell: "openssl genpkey -algorithm RSA -out {{ private_key_path | default('/tmp/encryption_privatekey')  }}"
+
+          - name: Generate RSA public key
+            shell: "openssl rsa -pubout -in {{ private_key_path | default('/tmp/encryption_privatekey')  }} -out {{ public_key_path | default('/tmp/encryption_publickey')  }}"
+
+          - name: Read the Encryption pass
+            slurp:
+              src: "{{ _local_encryption_pass_path | default('/tmp/encryption_pass') }}"
+            register: encryption_pass
+
+          - name: Read the Encryption public key
+            slurp:
+              src: "{{ public_key_path | default('/tmp/encryption_publickey')  }}"
+            register: encryption_publickey
+
+          - name: Read the Encryption private key
+            slurp:
+              src: "{{ private_key_path | default('/tmp/encryption_privatekey')  }}"
+            register: encryption_privatekey
+
+
+          - name: Show Encryption pass
+            shell: cat {{ _local_encryption_pass_path | default('/tmp/encryption_pass') }}
+        
+          - name: Show Encryption public key
+            shell:  cat {{ public_key_path | default('/tmp/encryption_publickey')  }}
+
+          - name: Show Encryption private key
+            shell:  cat {{ private_key_path | default('/tmp/encryption_privatekey')  }}
+
+
+          - name: Output Encryption pass VAR value
+            debug:
+              msg: "{{ encryption_pass.content | b64decode | trim  }}"
+        
+          - name: Output Encryption public key VAR value
+            debug:
+              msg: "{{ encryption_publickey.content | b64decode | trim  }}"
+
+          - name: Output Encryption private key VAR value
+            debug:
+              msg: "{{ encryption_privatekey.content | b64decode | trim }}"
+{% endraw %}

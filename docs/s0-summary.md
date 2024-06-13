@@ -51,9 +51,11 @@ This is the summary of the demo steps:
 
 2. Section 2 - Automated device onboarding
     1. Open the "Jobs" page in the AAP and keep it visible while performing the following steps.
-    2. Boot the edge server from Network and select the right Image in the PXE menu
-    3. Wait until the server bootsand review the Workflow Jobs in AAP
-    4. SSH into the edge device and explain how AAP auto-registration is done
+    2. Push a file with your pull-secret in Gitea under `rhde/prod/rhde_config/os/etc/crio/openshift-pull-secret`
+    3. Create the boot ISO using the AAP Job `Create ISO Kickstart`
+    4. Boot the edge server from ISO
+    5. Wait until the server bootsand review the Workflow Jobs in AAP
+    6. SSH into the edge device and explain how AAP auto-registration is done
 
 3. Section 3 - Consistent edge device configuration at scale
     - Configuration consistency across all devices

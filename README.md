@@ -213,7 +213,7 @@ In this Section we will cover the following topics:
 
 In the first section we created the image and placed it on a web server. Now, we're going to deploy that image on the end device.
 
-In this demo/workshop we will be booting the device directly from the network (the local edge manager server will act as PXE server), eliminating the need for creating a USB with the ISO image, and creating a hands-off installation.
+In this demo we will be booting from the ISO bt you can also configure boot from network (PXE) using that image.
 
 These are the step descriptions for this section:
 

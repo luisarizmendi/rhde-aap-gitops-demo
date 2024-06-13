@@ -1,0 +1,165 @@
+{% raw %}
+---
+- name: Create custom RPMs
+  hosts:
+    - all
+  tasks:
+    - name: Get the custom RPM files
+      delegate_to: localhost
+      block:
+        - name: Remove the local clone
+          file:
+            path: "{{ local_clone_path | default('/tmp/repo_clone') }}"
+            state: absent
+
+        - name: Create temp directory
+          file:
+            path: "{{ local_clone_path | default('/tmp/repo_clone') }}"
+            state: directory
+
+        - name: Extract protocol from git_repo_url
+          set_fact:
+            git_repo_url_http: "{{ git_repo_url | regex_search('^(http|https)') | default('') }}"
+
+        - name: Remove protocol from git_repo_url
+          set_fact:
+            git_repo_url_nohttp: "{{ git_repo_url | regex_replace('^(http|https)://', '') }}"
+   
+        - name: Clone repo 
+          ansible.builtin.shell:            
+            cmd: "git clone {{ git_repo_url_http }}://{{ git_user }}:'{{ git_password }}'@{{ git_repo_url_nohttp }} {{ local_clone_path | default('/tmp/repo_clone') }}"
+
+        - name: Get file paths
+          set_fact:
+            _custom_rpm_path: "{{ local_clone_path | default('/tmp/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ path }}"
+
+        - name: Find all files in the source directory
+          find:
+            paths: "{{ _custom_rpm_path }}"
+            recurse: yes
+            file_type: file
+          register: found_files
+
+        - name: Get file paths
+          set_fact:
+            _custom_rpm_filenames: "{{ found_files.files | map(attribute='path')  | list }}"
+
+
+
+
+
+
+
+
+    - name: List all SPEC files
+      set_fact:
+        _custom_rpm_spec_files: "{{ _custom_rpm_filenames | select('match', '^' + _custom_rpm_path + '/.*\\.spec$', 'multiline') | list }}"
+
+    - name: List all SPEC file name crop
+      set_fact:
+        _custom_rpm_spec_files_crop: "{{ _custom_rpm_spec_files | map('basename') | list }}"
+  
+    - name: List all non-SPEC files
+      set_fact:
+        _custom_rpm_nonspec_files: "{{ _custom_rpm_filenames | reject('match', '^' + _custom_rpm_path + '/.*\\.spec$', 'multiline') | list }}"
+
+    - name: Set binary extensions
+      set_fact:
+        binary_extensions: "{{ binary_extensions | default(['exe', 'bin', 'dll', 'so', 'gz', 'tar']) }}"
+
+    - name: Separate binary files
+      set_fact:
+        _custom_rpm_nonspec_file_bin: "{{ _custom_rpm_nonspec_files | select('search', '\\.(' + binary_extensions | join('|') + ')$') | list }}"
+
+    - name: Separate non-binary files
+      set_fact:
+        _custom_rpm_nonspec_file_nonbin: "{{ _custom_rpm_nonspec_files | reject('search', '\\.(' + binary_extensions | join('|') + ')$') | list }}"
+
+    - name: Display SPEC files
+      debug:
+        var: _custom_rpm_spec_files
+
+    - name: Display NON SPEC files
+      debug:
+        var: _custom_rpm_nonspec_files
+
+
+    - name: Create ~/rpmbuild/SPECS/{{ git_user }} directory
+      file:
+        path: "~/rpmbuild/SPECS/{{ git_user }}"
+        state: directory
+
+    - name: Create ~/rpmbuild/SOURCES/{{ git_user }} directory
+      file:
+        path: "~/rpmbuild/SOURCES/{{ git_user }}"
+        state: directory
+
+    - name: Copy RPM SPEC files to ~/rpmbuild/SPECS/{{ git_user }}/
+      ignore_errors: true
+      become: true
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: "~/rpmbuild/SPECS/{{ git_user }}/"
+        force: true
+      loop: "{{ _custom_rpm_spec_files }}"
+
+    - name: Copy non-SPEC non-binary files to ~/rpmbuild/SOURCES/{{ git_user }}/
+      ignore_errors: true
+      become: true
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: "~/rpmbuild/SOURCES/{{ git_user }}/"
+        force: true
+      loop: "{{_custom_rpm_nonspec_file_nonbin }}"
+
+    - name: Copy non-SPEC binary files to ~/rpmbuild/SOURCES/{{ git_user }}/
+      ignore_errors: true
+      become: true
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "~/rpmbuild/SOURCES/{{ git_user }}/"
+        force: true
+      loop: "{{_custom_rpm_nonspec_file_bin }}"
+
+    - name: Run RPM build
+      become: true
+      shell: rpmbuild -bb ~/rpmbuild/SPECS/{{ git_user }}/{{ item }}
+      loop: "{{ _custom_rpm_spec_files_crop }}"
+
+    # TODO modify permissions to allow only image builder
+    - name: create local repo
+      become: true
+      shell: |
+        createrepo ~/rpmbuild/RPMS/
+        chmod a+rx ~
+
+    - name: Create repo-local-rpmbuild.toml
+      become: true
+      copy:
+        content: |
+          id = "local-rpm-build"
+          name = "RPMs build locally"
+          type = "yum-baseurl"
+          url = "file:///root/rpmbuild/RPMS"
+          check_gpg = false
+          check_ssl = false
+          system = false
+        dest: "repo-local-rpmbuild.toml"
+
+    - name: Add the local RPM repository to Image Builder sources
+      become: true
+      shell: "composer-cli sources add repo-local-rpmbuild.toml"
+
+    - name: Refresh repo
+      become: true
+      shell: createrepo --update /root/rpmbuild/RPMS
+
+
+
+
+    - name: Remove the local clone
+      file:
+        path: "{{ local_clone_path | default('/tmp/repo_clone') }}"
+        state: absent
+
+{% endraw %}

@@ -3,5 +3,5 @@
   hosts:
     - all
   tasks:
-    - name: Show Microshift container images
+    - name: Get Microshift container images
       shell: cat {{ offline_images_toml | default('/opt/files/blueprint-microshift-embedded.toml') }}

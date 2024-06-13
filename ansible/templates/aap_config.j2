@@ -234,10 +234,61 @@ controller_templates:
     credentials:
       - Image Builder Credentials
     execution_environment: Device Edge Execution Environment
+    ask_variables_on_launch: true
     become_enabled: true
     extra_vars: 
       offline_images_toml: "/opt/files/blueprint-microshift-embedded.toml"
      
+  - name: Create Custom RPMs
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Utilities
+    project: Device Edge Codebase
+    playbook: playbooks/create_custom_rpms.yml
+    credentials:
+      - Image Builder Credentials
+    execution_environment: Device Edge Execution Environment
+    ask_variables_on_launch: true
+    become_enabled: true
+    extra_vars: 
+        git_repo_url: "http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/rhde"
+        git_user: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+        git_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+        path_prefix: "rhde_image"
+        path: "custom-rpms"
+        env: "dev"
+
+  - name: Create Offline Automation Files
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Utilities
+    project: Device Edge Codebase
+    playbook: playbooks/create_offline_automation_files.yml
+    ask_variables_on_launch: true
+    credentials:
+      - Image Builder Credentials
+    execution_environment: Device Edge Execution Environment
+    extra_vars: 
+        git_repo_url: "http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/rhde"
+        git_user: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+        git_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+        path_prefix: "rhde_config"
+        path: "scripts/offline-automation/input"
+        output_path: "scripts/offline-automation/output"
+        env: "dev"
+        encryption_pass: "+DZNMJA="
+        encryption_publickey: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA7/yY+owNZyfGcFIlIooj\nqSjfojqs32biVURkpXmuwIogcx9z+rGYX0IBvPXUzndBvTYelrq3YRj63H1czTHb\nJsjwiKpM77wgmj8lrv8IBXCbvW0bmIz5elHgNHG5++yIH9AiK5EDrTLWjJMAfrZY\n2WqSAbQPGfTWLVzW/KU4u5uhnGZARkN9k1Ah+6ZGN+3A+WLYazqzX6UanKRmINNb\nvGDlVY0Xf/eE8bYZu2k6vAmzhAB98dttysUwFTJFk1CbmSoiiP7cAZYm3cYE6jB8\nYjrNiZA6wcTxuGX/ikP7B0BZDRxPYtkrB6J00LJgBaDkYHjbD3isslfPbkYqREZ+\nKwIDAQAB\n-----END PUBLIC KEY-----"
+        encryption_privatekey: "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDv/Jj6jA1nJ8Zw\nUiUiiiOpKN+iOqzfZuJVRGSlea7AiiBzH3P6sZhfQgG89dTOd0G9Nh6WurdhGPrc\nfVzNMdsmyPCIqkzvvCCaPyWu/wgFcJu9bRuYjPl6UeA0cbn77Igf0CIrkQOtMtaM\nkwB+tljZapIBtA8Z9NYtXNb8pTi7m6GcZkBGQ32TUCH7pkY37cD5YthrOrNfpRqc\npGYg01u8YOVVjRd/94Txthm7aTq8CbOEAH3x223KxTAVMkWTUJuZKiKI/twBlibd\nxgTqMHxiOs2JkDrBxPG4Zf+KQ/sHQFkNHE9i2SsHonTQsmAFoORgeNsPeKyyV89u\nRipERn4rAgMBAAECggEAXuSosNlUK2fk5WD14hRxSWAqHYHJ/YQ3FrQ2f9//o456\nikrzlztGHtSAz3D9Nq6dRe3yZnNqM3CnMSw418JQ/6MQyVldlqXy1ksF4Y5iY5RF\nYL+V29pSg3WAi/w0KFM8+Cdae5OZupCRmYA+/9umgkHLffTuy7quPb2qHLhQGI4L\ncfBOtoYrIHjYQ+/o5Sb2FksTNWH43H6/dUeT1jnHEkLznBQ7v2ZTgCGK3l9eapru\nStsxGaUC6DFdbS8CVAtwZ8ErLsSvMojuId6bSlWXiWVZPDUNcIp+MShCs8V1/485\nkdGGGjgd0KVr8ElDbYqFVn7nV1QnKftMFckpYQWfYQKBgQD2yC2HBRxPvTdm11Pw\nLfR1RtabyeSg2GISpIyfosgqbU43pM2SIvXejHZlDF9MoL1dnDBxLiSVCkbCfjuh\nBr+3t0I4jFMPKmYC14Z/sBfzCa6WteB9jE6Z8vY7AKXIqe+pZzrHvz44iluBCVwx\nXgugMN+y/C1/desE1Qz44rKvuQKBgQD483DtgVtSrZLsw/Eo4djwrmgvHIiH8YrK\nmf8lcxoOrF5P5ABEvVgUsrBGasYTEs8QKb/FHW7D6luPQFdwu+1pLPMgidxTR4di\nSusfvgdeTc+ApVoX11tyCFnv2JZ0Ofn1ZucLAqMvkpBOgjtz9OAjopDSB0k3QHiB\nzPTW8tNnAwKBgQDJARs0EpGQ0UnC1jhkNMoci+pZUgSKjjSzgpuXmvr2s7k10WIv\nWZJyBm6Yt48X1wTmrkU2qqLZUll4KWFgMyMM/JNPg9xTSfF09x9x+XhIWOZ/kvya\nxiFve1nbjRd7bg7rKE3UTIzdeLQ3UexpuXQ2shhCrOxSGTWn5fB++Aca4QKBgQD0\nwtQ6jr3s0b7sjdEi8rnKGI9SEmmhzrc4bqPOfBYYaxvmzDH/Y3GgF/b7pKrNweZW\n69UhxchLUrVmaEoQCpRmnc0EJsa6Ek9nMmVtNfYkn7ftsaScYB4GRXO3PmjeKMo6\nnkt2JcevVBgRODWf0hg0sPZVqNgxPG++nnXyh5eVZQKBgQCcFwwAUFHuvbPoQFnu\np9ClW3bHHYHcM01p6kQP05EV5alOLU2uG9CGBM3X8dBYDEc+VBEE2pyvXG592Luy\newi0Y3uI11JuN2uXgKec75+NCAypzq4Te4GqKs5D2NmwGzPbcPiILZndS36znQy5\nIdpm7rghODIyz9NXH5itGh80cA==\n-----END PRIVATE KEY-----"
+
+  - name: Generate Encryption Pass and Keys
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Utilities
+    project: Device Edge Codebase
+    playbook: playbooks/generate-encryption-pass-key.yml
+    become_enabled: true
+    credentials:
+      - Image Builder Credentials
+    execution_environment: Device Edge Execution Environment
+
+
 
 
   - name: Create ISO Kickstart
