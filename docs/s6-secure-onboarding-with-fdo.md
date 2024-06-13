@@ -45,7 +45,7 @@
 
 9. SSH to the Edge Server and show the different `/etc/fdo/stores/` directories. Explain that for this demo FDO is configured to auto-approve the onboarding but you can also control what devices will be accepted by changing the `report_to_rendezvous_endpoint_enabled` parameter to `false` in the `/etc/fdo/owner-onboarding-server.conf.d/owner-onboarding-server.yml` configuration file what will make necessary to manually copy the vouchers in `/etc/fdo/stores/owner_vouchers/` to the `/etc/fdo/stores/rendezvous_registered/` directory to accept the device (an ansible playbook run by AAP can also be configured).
 
-10. (optional) You can also run `lsblk` and show the luks encryption in the disk also performed by the fdo client following the config sent by the FDO server ()`/etc/fdo/serviceinfo-api-server.conf.d/serviceinfo-api-server.yml`).
+10. (optional) You can also run `lsblk` on the edge device and show the luks encryption in the disk also performed by the fdo client following the config sent by the FDO server ()`/etc/fdo/serviceinfo-api-server.conf.d/serviceinfo-api-server.yml`).
 
 ```bash
 [root@edge-5254003D5080 ~]# lsblk 
