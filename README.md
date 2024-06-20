@@ -27,6 +27,7 @@ GitOps principles enable a seamless and auditable approach to infrastructure and
   - [Section 4 - Edge computing APPs lifecycle management](#section-4---edge-computing-apps-lifecycle-management)
   - [Section 5 - Bulletproof system upgrades](#section-5---bulletproof-system-upgrades)
   - [Section 6 - Secure Onboarding with FDO](#section-6---secure-onboarding-with-fdo)
+  - [Section 7 - Custom Offline Onboarding](#section-7---custom-offline-onboarding)
   - [Closing](#closing)
 
 
@@ -34,7 +35,9 @@ GitOps principles enable a seamless and auditable approach to infrastructure and
 
 The demo takes at least 180 minutes with no breaks. If you have time, a break after each main section is recommended. 
 
-
+ >**Note**
+  >
+  > Some sections will need you to prepare the RHDE images in order to save some time.
 
 ## Lab Architecture
 
@@ -63,7 +66,7 @@ If you plan to use VMs you just need enough free resources in your laptop/server
 
 If you use physical hardware you probably will need:
 + Two (mini) x86 servers, one of them with (4vCPUs, 16GB RAM, 50GB+ disk and two network interfaces)
-+ One 2GB USB key
++ One 6 GB USB key
 + USB Keyboard (I use one of [this USB RFID mini keyboards](https://www.amazon.es/dp/B07RQBRRR7?psc=1&ref=ppx_yo2ov_dt_b_product_details), but be sure that it does not use just Bluetooth)
 + Video Cable (and HDMI - DisplayPort adapter if needed) and external Monitor to show boot console. If you don't want to use an external screen you can also use a [Video Capture card like this one](https://www.amazon.es/dp/B0CLNHT29F?ref=ppx_yo2ov_dt_b_product_details&th=1) that I use that can show the physical device video output as a video input (camera) in your laptop.
 + Access Point or Router if you don't have a cabled connection to Internet
@@ -131,6 +134,8 @@ The following concepts will be reviewed in this demo:
     * Using Manifest (GitOps)
     * Using Help
   * Custom RPM
+
+* Edge Device Upgrade
 
 * Edge Device Self-Healing
   * Auto rollbacks in Operating System Upgrades
@@ -323,6 +328,8 @@ In summary, it's all about deciding where to place your workload and how you wan
 
 In this Section we will cover the following topics:
 
+* Edge Device Upgrade
+
 * Edge Device Self-Healing
   * Auto rollbacks in Operating System Upgrades
 
@@ -385,6 +392,51 @@ Continue with the detailed steps to demo this section:
 This section reviewed how you can take advantage of the Red Hat implementation of the FDO specification, and how you can use [Ignition](https://coreos.github.io/ignition/) to inject onboarding customizations in the Simplified Installer ISO created by the image builder.
 
 Thanks to FDO, you can get a secure onboarding process, removing the risk of someone stealing your image or device and having access to sensitive data.
+
+
+
+## Section 7 - Custom Offline Onboarding
+
+In this Section we will cover the following topics:
+
+* Create and publish an OSTree repository using a GitOps approach
+
+* Edge Device installation ISO generation:
+  * Injecting kickstart in a base ISO (standard RHEL ISO)
+
+* Device Onboarding customization using the following different methods:
+  * Kickstart
+  * Custom RPMs
+
+* Application deployment using:
+  * Custom RPM
+
+* Edge Device Upgrade
+---
+
+Sometimes you are in an environment with no external connectivity and you have to deploy containerized workloads (or just Microshift, which parts are containerized) in Red Hat Device Edge. In that case you will need to embed all the required components (container images, manifests, ...) in the image.
+
+
+Additionally, you probably will need to include secrets as part of your onboarding. Adding secrets to an image (if those are not encrypted) is not a good idea since someone can steal the image (ie. get the ISO) and then extract your secrets.
+
+Usually this problem can be solved by performing a "late binding" onboarding approach such as what you get with [FIDO FDO](https://fidoalliance.org/device-onboarding-overview/), but in a disconnected environment probably you won't have access to external servers (ie. FIDO FDO servers), so you will need to introduce those secrets after the deployment in another different way. 
+
+Several companies/people are including customizations and secrets as a second step right after the device deployment using a USB key or a manual entry using local keyboards and screens. 
+
+USBs are commonly used because it could happen that your edge devices lack of screens and even keyboard inputs, so one possible way to introduce those customizations is making that the device detects that someone has connected a USB key and then, automatically, gets the secrets, automations, etc from it and then applies them into the system.
+
+This also introduce some risks, for example, someone could stole the USB key and get access to the secrets, or someone could potentially change the automations and configure the system in the way that THEY want instead, not the way that YOU want. One easy way to remove those risks is to encrypt the contents of the USB key, so if you don't have the key you cannot access the contents, and also digitally sign the automations and secrets, in order to be completely sure that those have not been modified by somebody else.
+
+In this section we are going to see how we can use a USB key to trigger the onboarding automation. In addition, you will also see how you can trigger than onboarding automation by introducing a token using a keyboard and screen (if you have them in your device) instead using USB keys.
+
+As a "Bonus" step, you can see how to use the same "zero-touch" approach to automate the OSTree upgrade in an offline environment.
+
+Continue with the detailed steps to demo this section:
+
+* [Custom Offline Onboarding](docs/s7-custom-offline-onboarding.md)
+
+We have seen how you can perform a secure onboarding by installing your own RPM packages containing custom scripts. This is a great complement to the other methods reviewed before (kickstart, ignition and FDO servers) and gives you the flexibility to build any onboarding experience that you can imagine.
+
 
 
 

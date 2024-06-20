@@ -37,6 +37,10 @@
 
 7. Boot the edge device from the ISO and wait until you get the prompt (or the `kiosk-mode` if it's configured). While this happens you can SSH to the Edge Manager server, show the `/etc/fdo/serviceinfo-api-server.conf.d/serviceinfo-api-server.yml` and explain the automation performed with the FDO servers, and how those are interdependant with the customizations made using Ignition (file `test-ignition.bu` in Gitea). It is important to mention that FDO includes two secrets: the ipsec secret (useful if you setup a VPN for your demo) and a Token to access AAP (this token is fake, it was configured here just to show the FDO concept, AAP is configured to accept request without further authentication in this demo).
 
+  >**Note**
+  >
+  > The start of the onboarding process takes more time to start than when not using FDO, so be patient until you find the AAP onboarding workflow running
+
 8. After some time, check in AAP that the device is being onboarded. During this time you can jump into the edge device and:
 
 * Show that the customizations configured in the Ignition file have been applied

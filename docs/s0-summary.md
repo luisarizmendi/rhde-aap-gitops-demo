@@ -26,6 +26,8 @@ During this demo, the following features will be shown:
     * Using Help
   * Custom RPM
 
+* Edge Device Upgrade
+
 * Edge Device Self-Healing
   * Auto rollbacks in Operating System Upgrades
   * Edge Device configuration enforcing (GitOps)
@@ -151,23 +153,54 @@ This is the summary of the demo steps:
     8. SSH the edge device and show that both the Ignition and FDO customizations took place. Show `journalctl -u fdo-client-linuxapp` 
     9. Show and explain how the FDO Vouchers where used during the onboarding (in this demo with auto-approval)
 
+7. Section 7 - Custom offline onboarding
 
+    - Prepare the automation scripts
+      0. (optional) Generate the Encryption Pass and Keys by launching the `Generate Encryption Pass and Keys` Job in AAP
+      1. Create the Encrypted TAR file with the automations by runnign the `Create Offline Automation Files` Job in AAP
 
+    - Create the custom RPMs
+      2. Go to where you have your local clone of the `rhde` repository, copy the generated files (`rhde_encrypted.tar` -> `onboarding-kiosk`) (`rhde_automation_encryption_key` and `rhde-automation-pub.pem` -> `usb-automation`) and push the changes
+      3. Create the RPMs launching the `Create Custom RPMs` Job in AAP
 
+    - Create the Offline Image
+    4. Open the image definition in Gitea in `rhde/dev/rhde_image/dev-image-definition.yml` and add the custom RPMs that you created (if they are not already there)
+    5. Show in the image definition the container images that will be embeded. If you want run the `Get list of Microshift offline images` Job in AAP to get the latest ones
+    6. Generate the RHDE image by changing something in `rhde/dev/rhde_image/dev-image-definition.yml` (ie. adding `tcpdump` package)
 
+    - Download the ISO
+      7. Inject the Kickstart in the generated ISO by running the `Create ISO Kickstart` Job in AAP. You need to customize the variables before running it.
+      8. Download the ISO from `http://<edge manager ip>/<username>/dev/iso/<username>-dev-rhel.iso`
 
+    - Deploy and trigger the onboarding
+      9. Prepare two devices/VMs and boot from ISO
+    
+      - USE CASE 1 - Manual token entry using keyboard (in device 1)
+        10. Try to access the APP `http://web-secret-http.apps.<ip>.nip.io` and SSH to the device and show Microshift Pods with `oc --kubeconfig /var/lib/microshift/resources/kubeadmin/kubeconfig get pod --all-namespaces`
+        11. Access the device/VM console 
+        12. Introduce the Encryption pass that you find in Gitea (`rhde/dev/rhde_config/scripts/offline-automation/output/rhde_automation_encryption_key`)
+        13. When the Kiosk mode disappears, refresh `http://web-secret-http.apps.<ip>.nip.io`, you should see now the secrets.
 
+      - USE CASE 2 - USB Key automation (in device 2)
+        10. Try to access the APP `http://web-secret-http.apps.<ip>.nip.io` and SSH to the device and show Microshift Pods with `oc --kubeconfig /var/lib/microshift/resources/kubeadmin/kubeconfig get pod --all-namespaces`
+        14. Copy the `rhde/dev/rhde_config/scripts/offline-automation/output/rhde_encrypted.tar` in an USB key
+        15. When Microshift is up, connect the USB Key to the device and wait few seconds
+        16. When the Kiosk mode disappears, refresh `http://web-secret-http.apps.<ip>.nip.io`, you should see now the secrets.
 
-
-
-
-
-
-
-
-
-
-
+    - BONUS - Automated offline upgrade
+      0. Create a new image
+      1. Download the TAR file with the new image from `http://<edge manager ip>/<username>/dev/rhde-image.tar`
+      2. Create a shell script that performs the upgrade using the TAR file that you downloaded in the previous step
+      3. Create a directory (ie. `/tmp/offline-automation`) and the required subfolders to store the files to be encrypted (`rhde`) and the image and script location (`rhde-automation`). 
+      4. Copy the public and private certificates and the encryption pass in `/tmp/offline-automation`
+      5. Copy both the `rhde-image.tar` and the shell script in the `rhde-automation` directory.
+      6. Create a TAR file with `rhde-automation` directory and generate the digital signature
+      7. Move the final contents (signature and signed tar file) that you want to Encrypt into the `rhde` folder 
+      8. Create a new TAR file with the `rhde` directory and encrypt it using your Encryption pass
+      9. Copy `/tmp/offline-automation/files/rhde_encrypted.tar` to the USB key (top directory)
+      10. SSH into the device and see the running image with the `sudo rpm-ostree status` command
+      11. Plug in the USB key and wait until the device reboots
+      12. Check again the device images with `sudo rpm-ostree status`
 
 
 

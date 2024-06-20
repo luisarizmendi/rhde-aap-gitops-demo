@@ -92,22 +92,22 @@
 
         - name: Create offline-automation folder
           file:
-            path: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/scripts"
+            path: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde-automation"
             state: directory
 
         - name: Copy automation scripts to offline-automation folder
           copy:
             src: "{{ _files_path }}/"
-            dest: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/scripts"
+            dest: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde-automation"
 
         - name: Create signed file
           archive:
-            path: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/scripts"
-            dest: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signed_file | default('offline-automation.tar.gz') }}"
+            path: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde-automation"
+            dest: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signed_file | default('rhde-automation.tar.gz') }}"
             format: gz
 
         - name: Generate signature
-          shell: openssl dgst -sha256 -sign "{{ local_path_privatekey | default('/tmp/offline-automation/encryption_privatekey.pem') }}" -out "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signature_file | default('offline-automation-signature.sha256') }}" "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signed_file | default('offline-automation.tar.gz') }}"
+          shell: openssl dgst -sha256 -sign "{{ local_path_privatekey | default('/tmp/offline-automation/encryption_privatekey.pem') }}" -out "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signature_file | default('rhde-automation-signature.sha256') }}" "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signed_file | default('rhde-automation.tar.gz') }}"
 
         - name: Create rhde directory
           file:
@@ -115,10 +115,10 @@
             state: directory
 
         - name: Move signature file to rhde directory
-          shell: mv "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signature_file | default('offline-automation-signature.sha256') }}" "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde/"
+          shell: mv "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signature_file | default('rhde-automation-signature.sha256') }}" "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde/"
 
         - name: Move signed file to rhde directory
-          shell: mv "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signed_file | default('offline-automation.tar.gz') }}" "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde/"
+          shell: mv "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signed_file | default('rhde-automation.tar.gz') }}" "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde/"
 
 
     - name: Create encrypted file
@@ -149,6 +149,29 @@
           ansible.builtin.copy:
             src: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde_encrypted.tar"
             dest: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}/rhde_encrypted.tar"
+
+
+        - name: Copy encrypted pass file to repo
+          delegate_to: localhost
+          copy:
+            src: "{{ local_path_encryption_pass | default('/tmp/offline-automation/encryption_pass') }}"
+            dest: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}/rhde_automation_encryption_key"
+
+
+        - name: Copy public key file to repo
+          delegate_to: localhost
+          copy:
+            src: "{{ local_path_publickey | default('/tmp/offline-automation/encryption_publickey.key') }}"
+            dest: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}/rhde-automation-pub.pem"
+
+
+
+        - name: Copy private key file to repo
+          delegate_to: localhost
+          copy:
+            src: "{{ local_path_publickey | default('/tmp/offline-automation/encryption_privatekey.key') }}"
+            dest: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}/rhde-automation-pri.pem"
+
 
 
         - name: Push rhde_encrypted.tar"

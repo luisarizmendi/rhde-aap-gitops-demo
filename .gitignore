@@ -4,7 +4,6 @@ ansible/playbooks/test.yml
 
 !**/.keep
 
-
 aap.tar.gz
 manifest.zip
 microshift-embedded-images.toml
@@ -17,8 +16,6 @@ terraform.tfstate*
 
 # OLD demos
 old-demos/demos/microshift-disconnected/files/others/usb-contents/*
-*.pem
-rhde_automation_encryption_key
 old-demos/demos/microshift-disconnected/files/others/upgrades/usb/v2/*
 old-demos/demos/microshift-disconnected/files/others/upgrades/usb/v3/*
 

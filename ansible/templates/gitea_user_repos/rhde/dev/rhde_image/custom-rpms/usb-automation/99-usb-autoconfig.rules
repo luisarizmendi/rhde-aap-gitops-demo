@@ -1,0 +1,1 @@
+ACTION=="add", KERNEL=="sd*[!0-9]", SUBSYSTEM=="block", ENV{ID_TYPE}!="floppy", ENV{ID_BUS}=="usb", TAG+="systemd", ENV{USB_DEVICE_PATH}="%E{DEVNAME}", ENV{SYSTEMD_WANTS}="usb-autoconfig.service", RUN+="/usr/bin/usb_check.sh"

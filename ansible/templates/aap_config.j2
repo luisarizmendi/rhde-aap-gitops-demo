@@ -237,7 +237,7 @@ controller_templates:
     ask_variables_on_launch: true
     become_enabled: true
     extra_vars: 
-      offline_images_toml: "/opt/files/blueprint-microshift-embedded.toml"
+      offline_images_toml: "/opt/files/blueprint-microshift-embedded.yaml"
      
   - name: Create Custom RPMs
     organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
@@ -306,7 +306,7 @@ controller_templates:
       kickstart_http_location: "http://{{ ansible_host }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/prod/prod-kickstart.ks"
       iso_dst_path: "/var/www/html/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
       basearch: "x86_64"
-      kickstart_name: "prod-kickstart.ks"
+      offline: false
       image_environment: "prod"
 
 

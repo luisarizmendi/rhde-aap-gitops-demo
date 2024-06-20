@@ -53,6 +53,19 @@
               env: "test"
               path: "os"
 
+    - name: Dev Config Change
+      condition: "event.payload.commits[0].modified is search('dev/rhde_config/os/',ignorecase=true)  or event.payload.commits[0].added is search('dev/rhde_config/os/',ignorecase=true)"
+      action:
+        run_job_template:
+          name: Copy config files
+          organization: "{{ event.payload.repository.owner.login  }} Organization"
+          job_args:
+            extra_vars:
+              git_repo_url: {% endraw %}"http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{% raw %}{{ event.payload.repository.owner.login | capitalize }}/rhde"
+              git_user: "{{ event.payload.repository.owner.login | capitalize }}"
+              path_prefix: "rhde_config"
+              env: "dev"
+              path: "os"
 
     - name: New prod Edge Device Image
       condition: "'prod/rhde_image/prod-image-definition.yml' in event.payload.commits[0].modified"
@@ -121,6 +134,42 @@
               image_deploy_file: "test-deploy_version.yml"
               builder_blueprint_name: "test-{{ event.payload.repository.owner.login }}"
               image_environment: "test"
+
+
+    - name: New dev Edge Device Image
+      condition: "'dev/rhde_image/dev-image-definition.yml' in event.payload.commits[0].modified"
+      action:
+        run_workflow_template:
+          name: New Edge Device Image
+          organization: "{{ event.payload.repository.owner.login  }} Organization"
+          job_args:
+            extra_vars:
+              images_repo: "rhde"
+              files_path: "dev/rhde_image"
+              image_definition_file: "dev-image-definition.yml"
+              simplified_installer_definition_file: "dev-fdo-definition.yml"
+              image_deploy_file: "dev-deploy_version.yml"
+              builder_blueprint_name: "dev-{{ event.payload.repository.owner.login }}"
+              image_environment: "dev"
+              kickstart_name: "dev-kickstart.ks"
+              butane_name: "dev-ignition.bu"
+
+
+    - name: New dev Edge Device Simplified Installer
+      condition: "'dev/rhde_image/dev-fdo-definition.yml' in event.payload.commits[0].modified"
+      action:
+        run_job_template:
+          name: Compose Simplified Installer
+          organization: "{{ event.payload.repository.owner.login  }} Organization"
+          job_args:
+            extra_vars:
+              images_repo: "rhde"
+              files_path: "dev/rhde_image"
+              simplified_installer_definition_file: "dev-fdo-definition.yml"
+              image_deploy_file: "dev-deploy_version.yml"
+              builder_blueprint_name: "dev-{{ event.payload.repository.owner.login }}"
+              image_environment: "dev"
+
 
     - name: Publish new production device image
       condition: "('prod/rhde_image/prod-deploy_version.yml' in event.payload.commits[0].modified ) and 'prod/rhde_image/prod-image-definition.yml' not in event.payload.commits[0].modified"
@@ -209,6 +258,52 @@
               butane_name: "test-ignition.bu"
 
 
+
+
+    - name: Publish new dev device image
+      condition: "('dev/rhde_image/dev-deploy_version.yml' in event.payload.commits[0].modified) and 'dev/rhde_image/dev-image-definition.yml' not in event.payload.commits[0].modified"
+      action:
+        run_job_template:
+          name: Publish Image
+          organization: "{{ event.payload.repository.owner.login  }} Organization"
+          job_args:
+            extra_vars:
+              images_repo: "rhde"
+              files_path: "dev/rhde_image"
+              image_definition_file: "dev-image-definition.yml"
+              image_deploy_file: "dev-deploy_version.yml"
+              builder_blueprint_name: "dev-{{ event.payload.repository.owner.login }}"
+              image_environment: "dev"
+
+    - name: Publish new dev kickstart
+      condition: "('dev/rhde_image/dev-kickstart.ks' in event.payload.commits[0].modified) and 'dev/rhde_image/dev-image-definition.yml' not in event.payload.commits[0].modified"
+      action:
+        run_job_template:
+          name: Publish Kickstart
+          organization: "{{ event.payload.repository.owner.login  }} Organization"
+          job_args:
+            extra_vars:
+              images_repo: "rhde"
+              files_path: "dev/rhde_image"
+              image_environment: "dev"
+              kickstart_name: "dev-kickstart.ks"
+
+
+    - name: Publish new dev ignition
+      condition: "('dev/rhde_image/dev-ignition.bu' in event.payload.commits[0].modified) and 'dev/rhde_image/dev-image-definition.yml' not in event.payload.commits[0].modified"
+      action:
+        run_job_template:
+          name: Publish Ignition
+          organization: "{{ event.payload.repository.owner.login  }} Organization"
+          job_args:
+            extra_vars:
+              images_repo: "rhde"
+              files_path: "dev/rhde_image"
+              image_environment: "dev"
+              butane_name: "dev-ignition.bu"
+
+
+
     - name: Initial provisioning
       condition: event.payload.ip_address is defined and event.payload.nodename is defined and event.payload.user is defined
       action:
@@ -282,7 +377,34 @@
               env: "test"
               path: "apps/podman/quadlet"
 
+    - name: Dev APP Change - Microshift Manifest
+      condition: "event.payload.commits[0].modified is search('dev/rhde_config/apps/microshift/manifest/',ignorecase=true)  or event.payload.commits[0].added is search('dev/rhde_config/apps/microshift/manifest/',ignorecase=true)"
+      action:
+        run_job_template:
+          name: Microshift APPs Deploy - Manifest
+          organization: "{{ event.payload.repository.owner.login  }} Organization"
+          job_args:
+            extra_vars:
+              git_repo_url: {% endraw %}"http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{% raw %}{{ event.payload.repository.owner.login | capitalize }}/rhde"
+              git_user: "{{ event.payload.repository.owner.login | capitalize }}"
+              path_prefix: "rhde_config"
+              env: "dev"
+              path: "apps/microshift/manifest"
 
+
+    - name: Dev APP Change - Podman Quadlet
+      condition: "event.payload.commits[0].modified is search('dev/rhde_config/apps/podman/',ignorecase=true)  or event.payload.commits[0].added is search('dev/rhde_config/apps/podman/',ignorecase=true)"
+      action:
+        run_job_template:
+          name: Podman Quadlet APPs Deploy
+          organization: "{{ event.payload.repository.owner.login  }} Organization"
+          job_args:
+            extra_vars:
+              git_repo_url: {% endraw %}"http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{% raw %}{{ event.payload.repository.owner.login | capitalize }}/rhde"
+              git_user: "{{ event.payload.repository.owner.login | capitalize }}"
+              path_prefix: "rhde_config"
+              env: "dev"
+              path: "apps/podman/quadlet"
 
   execution_strategy: "parallel"
 {% endraw %}

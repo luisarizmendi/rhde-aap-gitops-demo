@@ -3,7 +3,7 @@ Version:    0.0.1
 Release:    rh1
 Summary:    Kubernetes Manifests for embedded APPs
 License:    BSD
-Source0:    {{ gitea_user_name }}{{ user_number }}/workload-manifests.tar.gz
+Source0:    {{ gitea_user_name }}{{ user_number }}/microshift-manifests.tar.gz
 ExclusiveArch: x86_64
 
 %description
@@ -18,13 +18,13 @@ Kubernetes Manifests for embedded APPs
 %global source_date_epoch_from_changelog 0
 
 %prep
-cp %{S:0} workload-manifests.tar.gz
+cp  %{_sourcedir}/{{ gitea_user_name }}{{ user_number }}/microshift-manifests.tar.gz microshift-manifests.tar.gz
 
 %build
 
 %install
 mkdir -p %{buildroot}/tmp/manifests/
-tar -xzf workload-manifests.tar.gz -C %{buildroot}/tmp/manifests/
+tar -xzf microshift-manifests.tar.gz -C %{buildroot}/tmp/manifests/
 mkdir -p %{buildroot}/usr/lib/microshift/manifests
 # Copy manifest files from /root/manifests
 cp -pr %{buildroot}/tmp/manifests/* %{buildroot}/usr/lib/microshift/manifests/

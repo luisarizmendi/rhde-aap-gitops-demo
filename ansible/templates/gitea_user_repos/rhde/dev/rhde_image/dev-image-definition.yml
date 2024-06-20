@@ -1,7 +1,43 @@
 ---
 builder_blueprint_name: dev-{{ gitea_user_name }}{{ user_number }}
-builder_request_timeout: 300
+builder_request_timeout: 2400
 builder_wait_compose_timeout: 2400
 builder_compose_type: edge-installer
 builder_skip_repo: false
-builder_blueprint_import_file: "dev-image-blueprint.toml"
+builder_compose_pkgs:
+  - microshift
+  - wait-microshift
+  - kiosk-mode
+  - {{ gitea_user_name }}{{ user_number }}-usb-automation
+  - {{ gitea_user_name }}{{ user_number }}-onboarding-kiosk
+  - {{ gitea_user_name }}{{ user_number }}-microshift-manifests
+builder_compose_containers:
+  - quay.io/luisarizmendi/kiosk-token:latest
+  - quay.io/luisarizmendi/secret-http:latest
+  - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:a4fd230c39c0836b2748516532577192ecdaa55e93943caf72bfa62fc26aaaa6
+  - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:ee7b6d7807b49e7ff265d3a5b09fac35c9eb59e863e3bf6cd20fbf8a2f41c342
+  - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:57eafed7555133b6e7af1e681d0c9b0968e22ba08cf9628a1ba75f7ac5bcc7ce
+  - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:824678e67933576425598c760040f103341699de6a171f6f6d1048b8d6602087
+  - registry.access.redhat.com/ubi8/openssl@sha256:9e743d947be073808f7f1750a791a3dbd81e694e37161e8c6c6057c2c342d671
+  - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:5139eaae8a09a94ecf42054c05e3cb08344f6ef752cd4753f0c8c994fa8be361
+  - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:4409ff68c579001cd565f5625a3be4598740344716e02fcf48f72dad5f5caeff
+  - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:ef4246255d411e98e2289f4d2f3a2c3966d54031717d3d59368c4f6473880556
+  - registry.redhat.io/lvms4/topolvm-rhel9@sha256:ce0c78c2867fb0b73c4911ae6afd5aaf9a413480cfcf4f31f46f2387c3df97e0
+  - registry.redhat.io/openshift4/ose-csi-node-driver-registrar@sha256:95691c21198e20d11777d592806fa00c018c17443d9b3aee853891dac6090470
+  - registry.redhat.io/openshift4/ose-csi-livenessprobe@sha256:98ad03919da81c910aaa8a4f12fcae3048f2119735aeb7ca5271f7c16cf5e4e6
+  - registry.redhat.io/openshift4/ose-csi-external-resizer@sha256:94f4a9ad37891cfbf58ca7db58000e703ff4d9d7a7b207d50ec844c1610e2111
+  - registry.redhat.io/openshift4/ose-csi-external-provisioner@sha256:76a5646d4b8406ae9065a1605644ec641acc97aa471ebae744e8e06487cec765
+  - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:6ba683ad546770fd8915e26e086acb8291a3ac4b0a999cb5b027b639d2be2c15
+  - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:a438c5196a05de97d5ab23a5c253da78dbdb78b063baaa8f710e9b287c722dc7
+  - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:a72ccb4a9578ec6fb4e10755ce1e882a0f1e118550b2664a0d957d9aed53a97a
+builder_compose_customizations:
+  user:
+    name: "{{ rhde_user_name }}"
+    description: "Admin user"{% raw %}
+    #password: "$6$3C0fNaU.aqxvP2wf$WaH5Us4KVqsEMFzXrwLqI8l0UekVvzPUEaFwqeN0BPZ3ZJDN4E7qlsXL48R9rVIdoM2q/HMOiurhHXQ9JiFV11"
+    {% endraw %}password: "{{ rhde_user_password }}"
+    groups: ["users", "wheel"]
+  services:
+    enabled: ["microshift"]
+  firewall:
+    ports: ["22:tcp", "80:tcp", "443:tcp", "6443:tcp", "5353:udp", "30000-32767:tcp", "30000-32767:udp"]

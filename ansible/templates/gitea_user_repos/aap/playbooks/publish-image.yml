@@ -124,11 +124,16 @@
         src: /tmp/user-repos/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/repo
         dest: /var/www/html/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}
 
-
-    - name: Remove tar file
+    - name: Remove old tar file
       ansible.builtin.file:
-        path: "/tmp/user-repos/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/{{ gitea_user_name }}{{ user_number }}-image_{% raw %}{{ image_id }}{% endraw %}.tar"
+        path: " /var/www/html/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/rhde-image.tar"
         state: absent
+
+    - name: Copy tar file
+      ansible.builtin.copy:
+        remote_src: true
+        src: "/tmp/user-repos/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/{{ gitea_user_name }}{{ user_number }}-image_{% raw %}{{ image_id }}{% endraw %}.tar"
+        dest: /var/www/html/{{ gitea_user_name }}{{ user_number }}/{% raw %}{{ image_environment }}{% endraw %}/rhde-image.tar
 
     - name: Remove tmp directory
       ansible.builtin.file:

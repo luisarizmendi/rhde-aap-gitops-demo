@@ -51,7 +51,7 @@ In order to deploy/prepare the lab you will only the Edge Management node, the E
 
 Remember that there are two devices/VMs involved in the demo:
 
-* Edge Management node: I've been able to deploy everything on a VM with 4 vCores and 10GB of memory. Storage will depend on the number of RHDE images that you generate.
+* Edge Management node: I've been able to deploy everything on a VM with 4 vCores and 10GB of memory. Storage will depend on the number of RHDE images that you generate. If you want to be sure, give it 150GB (it won't use all that space probably)
 The Edge Management node will nee to have a RHEL 9.x installed (this lab has been tested with RHEL 9.3), "minimal install" is enough. You will need to either have a passwordless sudo user in that system or include the sudo password in the Ansible inventory.
 
   >**Note**
@@ -353,7 +353,7 @@ Remember to change visibility of both 2048 and simple-http images to "public" in
   > The deployment will take long, expect something like 60-70 minutes depending on the number of configured users, VM/device resources and network connectivity
 
 
-### If you want to use the optional Terraform script
+### If you want to use the optional Terraform script (use AWS)
 If you want to use the provided terraform script to create the server in AWS, you will need to move one level up in the directory and run:
 
 ```shell
@@ -362,7 +362,18 @@ cd ..
 ```
 
 
-### If you have your VM prepared manually
+### If you have your VM/server prepared manually (now AWS)
+
+First, be sure that you have the latest version of the collection:
+
+```shell
+ansible-galaxy collection install luisarizmendi.rh_edge_mgmt --force-with-deps
+```
+
+  >**Note**
+  >
+  > Even if you have already installed the collection, it is a good idea to run the command above so the collection playbooks are updated if there has been any change since you downloaded it for the first time.
+
 
 Once you have all the pre-requisites ready, including the Ansible Vault secret file, you need to run the main playbook including the Vault password by adding the `--ask-vault-pass` option:
 
@@ -392,7 +403,7 @@ Go to `quay.io` in the 2024 repository and check that the "prod" tag is pointing
 ![2048 tags](images/rhde_gitops_quay-2048.png)
 
 
-You should also check that the image in the `device-edge-configs/APPs/microshift/manifest/2-deployment.yml` file on Gitea is `v1` and not `v3`.
+You should also check that the image in the `rhde/<environment>/rhde_config/apps/microshift/manifest/2048/app_2048-microshift-2-deploy.yml` file on Gitea is `v1` and not `v3`.
 
 If this environment was never used probably it will be correctly assigned but if you already ran the demo the "prod" tag will be probably pointing to "v3".
 

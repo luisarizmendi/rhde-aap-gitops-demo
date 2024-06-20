@@ -1,0 +1,11 @@
+[Unit]
+Description=USB Monitor Service
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/usb_autoconfig.sh
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

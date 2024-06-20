@@ -31,6 +31,13 @@ hostnamectl set-hostname --static edge-${MAC_ADDRESS_FORMAT}
 
 
 
+cat > /etc/environment <<EOF
+git_user={{ gitea_user_name }}{{ user_number }}
+env=dev
+KIOSK_URL=http://localhost:8000
+EOF
+
+
 ######### MICROSHIFT
 if rpm -q microshift &> /dev/null; then
 # Configure the firewall with the mandatory rules for MicroShift

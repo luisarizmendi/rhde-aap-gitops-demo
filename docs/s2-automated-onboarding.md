@@ -99,7 +99,7 @@ Once everything is ready, go ahead with the device onboarding:
 
 * Configure Edge Device: It's a workflow with a single Job:
 
-    - Copy config files: Gets the files from `device-edge-configs/OS` in Gitea and copy them into the edge device.
+    - Copy config files: Gets the files from `rhde/<environment>/rhde_config/os` in Gitea and copy them into the edge device.
 
 
 4. The magic behind this automated workflow is that, as explained in [Section 1 - Creating RHEL Images the GitOps way](#section-1---creating-rhel-images-the-gitops-way), the kickstart file crestes an auto-registration Systemd unit and script that is launched on the system first boot. That scripts calls the Event Driven Automation service to start the workflows in AAP. You can now SSH to the edge device and check those script and systemd unit with the following commands as root: 

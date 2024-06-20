@@ -36,10 +36,18 @@
           shell: blkid "{% raw %}{{ iso_base }}{% endraw %}" | awk -F 'LABEL="' '{print $2}' | cut -d '"' -f 1
           register: iso_label
 
+        - name: Inject file if offline is true
+          when: offline
+          get_url:
+            url: "{% raw %}{{ kickstart_http_location }}{% endraw %}"
+            dest: "/tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/kickstart.ks"
+            mode: '0644'         
+
 
         - name: Legacy BIOS setup
           block:
             - name: Modify isolinux configuration
+              when: not offline
               replace:
                 path: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/isolinux/isolinux.cfg
                 regexp: "quiet"
@@ -61,6 +69,7 @@
         - name: UEFI setup
           block:
             - name: Modify grub.cfg configuration
+              when: not offline
               replace:
                 path: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/EFI/BOOT/grub.cfg
                 regexp: "quiet"
