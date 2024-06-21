@@ -188,19 +188,16 @@ This is the summary of the demo steps:
         16. When the Kiosk mode disappears, refresh `http://web-secret-http.apps.<ip>.nip.io`, you should see now the secrets.
 
     - BONUS - Automated offline upgrade
-      0. Create a new image
-      1. Download the TAR file with the new image from `http://<edge manager ip>/<username>/dev/rhde-image.tar`
-      2. Create a shell script that performs the upgrade using the TAR file that you downloaded in the previous step
-      3. Create a directory (ie. `/tmp/offline-automation`) and the required subfolders to store the files to be encrypted (`rhde`) and the image and script location (`rhde-automation`). 
-      4. Copy the public and private certificates and the encryption pass in `/tmp/offline-automation`
-      5. Copy both the `rhde-image.tar` and the shell script in the `rhde-automation` directory.
-      6. Create a TAR file with `rhde-automation` directory and generate the digital signature
-      7. Move the final contents (signature and signed tar file) that you want to Encrypt into the `rhde` folder 
-      8. Create a new TAR file with the `rhde` directory and encrypt it using your Encryption pass
-      9. Copy `/tmp/offline-automation/files/rhde_encrypted.tar` to the USB key (top directory)
-      10. SSH into the device and see the running image with the `sudo rpm-ostree status` command
-      11. Plug in the USB key and wait until the device reboots
-      12. Check again the device images with `sudo rpm-ostree status`
+      1. Create a new image
+      2. Download the certificates and pass from Gitea (`rhde/dev/rhde_config/scripts/offline-automation/output`)
+      3. Create an `input` and `output` directories
+      4. Create the script that will generate the ecnrypted TAR file in the `output` directory with the contents that you put in the `input` directory
+      5. Prepare the contents and copy them into a `input` directory
+      6. Run the script
+      7. Copy the `rhde_encrypted.tar` file to the USB key (top directory)
+      8. SSH into the device and see the running image with the `sudo rpm-ostree status` command. Open the USB log with `tail -f /var/log/usb_check.log`
+      9. Plug in the USB key and wait until the device reboots
+      10. Check again the device images with `sudo rpm-ostree status`
 
 
 

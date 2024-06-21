@@ -2,7 +2,7 @@
 
 ## Video
 
-[![Section 7 - Video](https://img.youtube.com/vi/fjKFyxUWrUw/0.jpg)](https://www.youtube.com/watch?v=fjKFyxUWrUw)
+[![Section 7 - Video](https://img.youtube.com/vi/SaDnGbVHrZA/0.jpg)](https://www.youtube.com/watch?v=SaDnGbVHrZA)
 
 ---
 
@@ -186,7 +186,11 @@ Once you have the ISO you just need to boot a machine using it to get your devic
 
 In both cases we want to demonstrate that the onboarding can be done without external connectivity so it would be a good idea to connecter your server (either physical or virtual) to an isolated network.
 
-9. Prepare or create two VMs (2vCPUs, 2GB memory and 20GB disk) in your isolated network. Boot from the downloaded ISO.
+9. Prepare or create two VMs (2vCPUs, 2GB memory and 50GB disk) in your isolated network. Boot from the downloaded ISO.
+
+  >**Note**
+  >
+  > Create at least one device with 50GB disk instead of 20GB if you want to run the BONUS section with the automated offline image upgrade
 
 No matter if you are running the use case with the USB key or the manual token entry, once RHDE is deployed in the device you should start in the same way:
 
@@ -223,6 +227,10 @@ Now is when you can show the different use cases.
 
 ![Token-web](images/token-web.png)
 
+   >**Note**
+  >
+  > Before continue, it would be better that Microshift is Up because you will see the change in the APP inmediatelly after including the token, so use this trick: try to open the `http://web-secret-http.apps.<device ip>.nip.io/`, if you get "This site can’t be reached" then Microshift is not yet active, if you get "Application is not available" then it's (more or less) ready. 
+
 12. Introduce the the encryption key (for simplicity, you can find it in Gitea in `rhde/dev/rhde_config/scripts/offline-automation/output/rhde_automation_encryption_key`. Wait some seconds after you see the message "Your service is now active". The key was generated with a short number of characters, which is less secure but more convenient to type on the console for the demo.
 
   >**Note**
@@ -245,7 +253,7 @@ Now is when you can show the different use cases.
   >
   >  The USB needs regular FAT formating with a single partition (or at least the contents must be in the first partition of the USB key)
 
-15. Now connect the USB with the `rhde_encrypted.tar` file on the root path that you have prepared in the device. After some time you can refresh the `http://web-secret-http.apps.<ip>.nip.io` page, and you should see then the secrets. Since the customization cannot be done until MicroShift services are deployed, if you try to use the USB customization right after the first boot of the VM, it can take longer (a couple of minutes). You might now that Microshift is Up with this trick: try to open the `http://web-secret-http.apps.<device ip>.nip.io/`, if you get "This site can’t be reached" then Microshift is not yet active, if you get "Application is not available" then it's (more or less) ready. 
+15. Now connect the USB with the `rhde_encrypted.tar` file on the root path that you have prepared in the device. After some time you can refresh the `http://web-secret-http.apps.<ip>.nip.io` page, and you should see then the secrets. Since the customization cannot be done until MicroShift services are deployed, if you try to use the USB customization right after the first boot of the VM, it can take longer (a couple of minutes). You might now that Microshift is Up with the same trick: try to open the `http://web-secret-http.apps.<device ip>.nip.io/`, if you get "This site can’t be reached" then Microshift is not yet active, if you get "Application is not available" then it's (more or less) ready. 
 
   >**Note**
   >
@@ -256,6 +264,17 @@ Now is when you can show the different use cases.
 
 
 ### BONUS: Automating OSTree offline upgrades with the same approach
+
+## Video
+
+[![Section 7 . BONUS - Video](https://img.youtube.com/vi/b8aCWwA6lsI/0.jpg)](https://www.youtube.com/watch?v=b8aCWwA6lsI)
+
+---
+
+  >**Note**
+  >
+  > The edge device needs to have enough space to host the new OSTree image, if not the upgrade will fail. 20 GB is not enough, use a 50GB disk.
+
 
 You can use the same approach to minimize human interaction when upgrading your edge device to a newer version. The idea is to generate the new image in the Image Builder and include it along with the automation scripts on a USB key.
 
@@ -277,7 +296,7 @@ You will need to take two additional actions before running the automated upgrad
 
 #### Generate the new image
 
-The first obvious part is to generate an updated image. You can go to Gitea and modify the image description in `rhde/dev/rhde_image/dev-image-definition.yml`, for example including the `bind-utils` package
+1. The first obvious part is to generate an updated image. You can go to Gitea and modify the image description in `rhde/dev/rhde_image/dev-image-definition.yml`, for example including the `bind-utils` package
 
 
 While the image is being created, you can prepare the USB key.
@@ -285,25 +304,103 @@ While the image is being created, you can prepare the USB key.
 
 #### Create the automation script and copy the contents to the USB key
 
-Instead of using the Ansible playbooks in AAP as we did before, this time we will create the USB contents manually, so you get an idea how the encrypted content is generated.
+Instead of using the Ansible playbooks in AAP as we did before, this time we will create the USB contents with a shell script, so you can take a look at it and easily get an idea how the encrypted content is generated.
 
-You need to include two items in your automation bundle: the new OSTree image (in a TAR file) and the shell script that performs the upgrade steps.
+2. You need to get the private and public certs and the Encryption password. Remember that if you want to use the same that you used in the previous steps you can get them from Gitea (remember that this is a demo, **please do not store secrets such as private certificates or encryption keys in Git in your real environment**), more specifically in `rhde/dev/rhde_config/scripts/offline-automation/output`
 
-1. The TAR file with the new image can be downloaded from the HTTP server. We are using the `dev` environment, so you will be able to download it from `http://<edge manager ip>/<username>/dev/rhde-image.tar`
+```bash
+~/tmp/demo 
+❯ tree
+.
+├── rhde_automation_encryption_key
+├── rhde-automation-pri.pem
+└── rhde-automation-pub.pem
+
+1 directory, 3 files
+```
 
 
-2. Create a shell script that performs the upgrade using the TAR file that you downloaded in the previous step, for example:
+3. Create an `input` and `output` directories
+
+```bash
+~/tmp/demo 
+❯ tree
+.
+├── input
+├── output
+├── rhde_automation_encryption_key
+├── rhde-automation-pri.pem
+└── rhde-automation-pub.pem
+
+1 directory, 3 files
+```
+
+
+4. Create the script that will generate the ecnrypted TAR file in the `output` directory with the contents that you put in the `input` directory:
+
+```bash
+#!/bin/bash
+echo "Creating temporal directories"
+rm -rf output
+mkdir -p output/tmp/files/rhde
+mkdir -p output/tmp//files/rhde-automation
+
+echo "Copying input files"
+cp -r input/* output/tmp/files/rhde-automation
+
+echo "Creating TAR and signature"
+tar -C output/tmp/files -zcf output/tmp/files/rhde-automation.tar.gz rhde-automation
+openssl dgst -sha256 -sign rhde-automation-pri.pem -out output/tmp/files/rhde-automation-signature.sha256 output/tmp/files/rhde-automation.tar.gz
+
+
+echo "Creating Encrypted TAR"
+mv output/tmp/files/rhde-automation-signature.sha256 output/tmp/files/rhde
+mv output/tmp/files/rhde-automation.tar.gz output/tmp/files/rhde
+tar -C output/tmp/files/ -cf output/tmp/files/rhde.tar rhde/
+openssl enc -aes-256-cbc -salt -in output/tmp/files/rhde.tar -out output/tmp/files/rhde_encrypted.tar -pass "file:rhde_automation_encryption_key" -pbkdf2
+mv output/tmp/files/rhde_encrypted.tar output
+
+echo "Cleaning"
+rm -rf output/tmp
+```
+
+I named the script `create_encrypted_automation.sh`, so the directory tree now looks like this:
+
+
+```bash
+~/tmp/demo 
+❯ tree
+.
+├── create_encrypted_automation.sh
+├── input
+├── output
+├── rhde_automation_encryption_key
+├── rhde-automation-pri.pem
+└── rhde-automation-pub.pem
+
+3 directories, 4 files
+```
+
+5. Now prepare the contents and copy them into a `input` directory. In this case you need to include two items in your automation bundle: the new OSTree image (in a TAR file) and the shell script that performs the upgrade steps.
+
+The TAR file with the new image can be downloaded from the HTTP server. We are using the `dev` environment, so you will be able to download it from `http://<edge manager ip>/<username>/dev/rhde-image.tar`
+
+
+Create an `upgrade.sh` shell script that performs the upgrade using the TAR file that you downloaded in the previous step, for example:
 
 ```bash
 #!/bin/bash
 
 script_dir="$(dirname "$0")"
-repo_tar="/tmp/usb-autoconfigure/rhde/rhde-image.tar"
-repo_dir="/run/install/repo/ostree"
+repo_tar="${script_dir}/rhde-image.tar"
+repo_dir="/var/install/repo/ostree"
 
 if [ ! -d $repo_dir ]; then
     mkdir -p  $repo_dir
 fi
+
+echo "Change repo location (for demo)" 
+sed -i "s|^url=.*|url=file://${repo_dir}/repo|" /etc/ostree/remotes.d/edge.conf
 
 echo "Getting the new image"
 tar xvf $repo_tar -C $repo_dir
@@ -321,80 +418,87 @@ reboot
 ```
 
 
+Copy those files into the `input` directory, you will end up with this directory tree:
 
-3. Create a directory (ie. `/tmp/offline-automation`) and the required subfolders to store the files to be encrypted (`rhde`) and the image and script location (`rhde-automation`). 
+```bash
+~/tmp/demo 
+❯ tree
+.
+├── create_encrypted_automation.sh
+├── input
+│   ├── rhde-image.tar
+│   └── upgrade.sh
+├── output
+├── rhde_automation_encryption_key
+├── rhde-automation-pri.pem
+└── rhde-automation-pub.pem
+
+3 directories, 6 files
+```
+
+
+6. Run the script
+
+
+```bash
+❯ ./create_encrypted_automation.sh 
+Creating temporal directories
+Copying input files
+Creating TAR and signature
+output/tmp/files/rhde-automation/
+output/tmp/files/rhde-automation/rhde-image.tar
+output/tmp/files/rhde-automation/upgrade.sh
+Creating Encrypted TAR
+Cleaning
+```
+
+
+You will get the encrypted TAR file in the `output` directory:
+
+
+```bash
+❯ tree
+.
+├── create_encrypted_automation.sh
+├── input
+│   ├── rhde-image.tar
+│   └── upgrade.sh
+├── output
+│   └── rhde_encrypted.tar
+├── rhde_automation_encryption_key
+├── rhde-automation-pri.pem
+└── rhde-automation-pub.pem
+
+3 directories, 7 files
+```
+
+
+If you want to test that the file was encrypted correctly, you can try to decrypt using the encryption pass file using the following command:
+
+```bash
+openssl enc -d -aes-256-cbc -in output/rhde_encrypted.tar -out output/rhde.tar -pass "file:rhde_automation_encryption_key" -pbkdf2
+```
+
+
+7. Copy the `rhde_encrypted.tar` file to the USB key (top directory)
 
   >**Note**
   >
-  > Do not change those names, it's a shame but I have them fixed in the scripts
-
-
-```bash
-mkdir -p /tmp/offline-automation/files/rhde
-mkdir -p /tmp/offline-automation/files/rhde-automation
-```
-
-
-4. Copy the public and private certificates and the encryption pass (we will use it as a file instead of a string this time). Remember that if you want to use the same that you used in the previous steps you can get them from Gitea (remember that this is a demo, **please do not store secrets such as private certificates or encryption keys in Git in your real environment**), more specifically in `rhde/dev/rhde_config/scripts/offline-automation/output`
-
-```bash
-cp rhde-automation-pub.pem /tmp/offline-automation
-cp rhde-automation-pri.pem /tmp/offline-automation
-cp rhde_automation_encryption_key /tmp/offline-automation
-```
-
-
-5. Copy both the `rhde-image.tar` and the shell script in the `rhde-automation` directory.
-
-```bash
-cp rhde-image.tar /tmp/offline-automation/files/rhde-automation
-cp upgrade.sh /tmp/offline-automation/files/rhde-automation
-```
-
-
-6. Now create a TAR file with `rhde-automation` directory and generate the digital signature so people know that the content generated was generated by you and no others (and also that it has not been modified or corrupted)
-
-
-```bash
-tar zcvf /tmp/offline-automation/files/rhde-automation /tmp/offline-automation/files/rhde-automation.tar.gz
-openssl dgst -sha256 -sign /tmp/offline-automation/rhde-automation-pri.pem -out /tmp/offline-automation/files/rhde-automation-signature.sha256 /tmp/offline-automation/files/rhde-automation.tar.gz
-```
-
-
-7. Move the final contents (signature and signed tar file) that you want to Encrypt into the `rhde` folder 
-
-```bash
-mv /tmp/offline-automation/files/rhde-automation-signature.sha256 /tmp/offline-automation/files/rhde
-mv /tmp/offline-automation/files/rhde-automation.tar.gz /tmp/offline-automation/files/rhde
-```
-
-8. Create a new TAR file with the `rhde` directory and encrypt it using your Encryption pass
-
-```bash
-tar -C /tmp/offline-automation/files/ -cf /tmp/offline-automation/files/rhde.tar rhde/
-openssl enc -aes-256-cbc -salt -in /tmp/offline-automation/files/rhde.tar -out /tmp/offline-automation/files/rhde_encrypted.tar -pass "file:/tmp/offline-automation/rhde_automation_encryption_key" -pbkdf2
-```
-
-9. The previous step generates a file `/tmp/offline-automation/files/rhde_encrypted.tar` that you need to copy to the USB key (top directory)
-
-
+  > It takes time to copy the file since it contains the OSTree image
 
 #### Run the upgrade
 
-10. SSH into the device and see the running image with the `sudo rpm-ostree status` command
+8. SSH into the device and see the running image with the `sudo rpm-ostree status` command. You can also open the log file to see what something happens with you plugin the USB key: `tail -f /var/log/usb_check.log`
 
 
-11. Plug in the USB key and wait until the device reboots
+9. Plug in the USB key and wait until the device reboots
 
 
-12. Check again the device images with `sudo rpm-ostree status`
+  >**Note**
+  >
+  > It takes time to complete because it needs to decompress/copy the OSTree image
 
-
-
-
-
-
-
+10. Check again the device images with `sudo rpm-ostree status`
 
 
 
