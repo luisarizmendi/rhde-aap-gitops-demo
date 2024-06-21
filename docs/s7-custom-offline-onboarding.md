@@ -267,7 +267,7 @@ Now is when you can show the different use cases.
 
 ## Video
 
-[![Section 7 . BONUS - Video](https://img.youtube.com/vi/b8aCWwA6lsI/0.jpg)](https://www.youtube.com/watch?v=b8aCWwA6lsI)
+[![Section 7 . BONUS - Video](https://img.youtube.com/vi/b_a3_hENUNs/0.jpg)](https://www.youtube.com/watch?v=b_a3_hENUNs)
 
 ---
 
@@ -414,7 +414,7 @@ rpm-ostree status
 
 echo "Rebooting..."
 sleep 5
-reboot
+systemctl reboot
 ```
 
 
@@ -498,10 +498,58 @@ openssl enc -d -aes-256-cbc -in output/rhde_encrypted.tar -out output/rhde.tar -
   >
   > It takes time to complete because it needs to decompress/copy the OSTree image
 
+
+If you open the `/var/log/usb_check.log` will get an output like this one at the end, right before the restart, where you can see that the new image will be applied on the next boot:
+
+```bash
+...
+AvailableUpdate:
+        Version: 9.3 (2024-06-21T06:49:27Z)
+         Commit: 7663a8f462d6bdca8859ba614c506e09eb5159e1f3924327716ed2e5cc67fdde
+          Added: bind-libs-32:9.16.23-14.el9_3.4.x86_64
+                 bind-license-32:9.16.23-14.el9_3.4.noarch
+                 bind-utils-32:9.16.23-14.el9_3.4.x86_64
+                 fstrm-0.6.1-3.el9.x86_64
+                 libmaxminddb-1.5.2-3.el9.x86_64
+                 libuv-1:1.42.0-1.el9.x86_64
+0 metadata, 0 content objects imported; 0 bytes content written
+Staging deployment...done
+Added:
+  bind-libs-32:9.16.23-14.el9_3.4.x86_64
+  bind-license-32:9.16.23-14.el9_3.4.noarch
+  bind-utils-32:9.16.23-14.el9_3.4.x86_64
+  fstrm-0.6.1-3.el9.x86_64
+  libmaxminddb-1.5.2-3.el9.x86_64
+  libuv-1:1.42.0-1.el9.x86_64
+Run "systemctl reboot" to start a reboot
+State: idle
+Deployments:
+  edge:rhel/9/x86_64/edge
+                  Version: 9.3 (2024-06-21T06:49:27Z)
+                   Commit: 7663a8f462d6bdca8859ba614c506e09eb5159e1f3924327716ed2e5cc67fdde
+                     Diff: 6 added
+
+● edge:rhel/9/x86_64/edge
+                  Version: 0.0.4 (2024-06-20T16:06:07Z)
+                   Commit: 380aa1d5b474d798c80746a9fb10110867f5aa81f1a942b3752866d676faf85b
+...
+```
+
+
 10. Check again the device images with `sudo rpm-ostree status`
 
+```bash
+[root@localhost ~]# rpm-ostree status
+State: idle
+Deployments:
+● edge:rhel/9/x86_64/edge
+                  Version: 9.3 (2024-06-21T06:49:27Z)
+                   Commit: 7663a8f462d6bdca8859ba614c506e09eb5159e1f3924327716ed2e5cc67fdde
 
-
+  edge:rhel/9/x86_64/edge
+                  Version: 0.0.4 (2024-06-20T16:06:07Z)
+                   Commit: 380aa1d5b474d798c80746a9fb10110867f5aa81f1a942b3752866d676faf85b
+```
 
 
 
