@@ -80,7 +80,7 @@
 
         - name: Remove old ISO
           ansible.builtin.file:
-            path: "{% raw %}{{ iso_dst_path | default('/var/www/html/{% endraw %}{{ gitea_user_name }}{{ user_number }}{% raw %}') }}/{{ image_environment }}{% endraw %}/isos/{{ gitea_user_name }}{{ user_number }}{% raw %}-{{ image_environment }}-rhel-installer.iso"{% endraw %}
+            path: "{% raw %}{{ iso_dst_path | default('/var/www/html/{% endraw %}{{ gitea_user_name }}{{ user_number }}{% raw %}') }}/{{ image_environment }}{% endraw %}/isos/{{ gitea_user_name }}{{ user_number }}{% raw %}-{{ image_environment }}-rhel-installer.iso{% endraw %}"
             state: absent
 
         - name: Copy the ISO
