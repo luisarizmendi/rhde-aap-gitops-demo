@@ -1,0 +1,30 @@
+[allowlist]
+  description = "Global Allowlist"
+
+  # Ignore based on any subset of the file path
+  paths = [
+    '''old-demos\/demos\/microshift-disconnected\/files\/others\/upgrades\/blueprints\/blueprint-v3.toml''',
+
+    '''old-demos\/demos\/microshift-disconnected\/files\/others\/upgrades\/blueprints\/blueprint-v2.toml''',
+
+    '''old-demos\/demos\/microshift-disconnected\/files\/blueprint-microshift-embedded.toml''',
+
+    '''old-demos\/demos\/microshift-disconnected\/files\/blueprint-microshift-base.toml''',
+
+    '''docs\/s5-system-upgrades.md''',
+
+    '''ansible\/templates\/gitea_user_repos\/rhde\/test\/rhde_image\/test-image-definition.yml''',
+
+    '''ansible\/templates\/gitea_user_repos\/rhde\/prod\/rhde_image\/production-image-definition.yml''',
+
+    '''ansible\/templates\/fdo\/fdo-files\/var\/opt\/aap-eda.token''',
+
+    '''ansible\/templates\/gitea_user_repos\/rhde\/dev\/rhde_image\/dev-image-definition.yml''',
+
+    '''ansible\/templates\/gitea_user_repos\/rhde\/dev\/rhde_image\/dev-image-blueprint.toml''',
+
+    '''ansible\/templates\/aap_config.j2''',
+
+    '''ansible\/templates\/gitea_user_repos\/rhde\/dev\/rhde_image\/dev-image-definition.yml''',
+  ]
+        
