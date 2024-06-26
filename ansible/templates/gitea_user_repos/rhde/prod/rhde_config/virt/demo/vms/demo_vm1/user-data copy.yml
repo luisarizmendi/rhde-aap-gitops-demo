@@ -32,6 +32,7 @@ write_files:
       \"ip_address\": \"$IP_ADDRESS\", \
       \"user\": \"$USER\", \
       \"nodename\": \"edge-vm-$MAC_ADDRESS_FORMAT\", \
+      \"vm\": \"edge-$MAC_ADDRESS_FORMAT\", \
       \"env\": \"prod\" \
       }"
 

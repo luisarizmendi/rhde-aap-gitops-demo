@@ -117,6 +117,22 @@
           shell: "virsh start {{ item }}"
           loop: "{{ _vm_names.results | map(attribute='matches') | map('first') | map(attribute='name') | list }}"
 
+    - name: Add VM to the inventory
+      when: _is_matching_host | default(false)
+      block:
+          
+        - name: Install lxml module
+          become: true
+          shell: "pip install lxml"
 
+        - name: Get list of running VMs
+          community.libvirt.virt:
+            command: list_vms
+            state: running
+          register: running_vms
+
+        - name: Display Running VMs
+          debug:
+            var: running_vms
 
 {% endraw %}
