@@ -541,7 +541,7 @@ controller_templates:
         command_to_execute: date
 
 
-  - name: Configure KVM Host
+  - name: KVM - Configure Host
     organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
     inventory: Edge Devices
     ask_inventory_on_launch: false
@@ -562,7 +562,7 @@ controller_templates:
         vm_bundle: "changeme"
 
 
-  - name: Deploy VM
+  - name: KVM - Deploy VM
     organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
     inventory: Edge Devices
     ask_inventory_on_launch: false
@@ -583,6 +583,36 @@ controller_templates:
         vm_bundle: "changeme"
 
 
+  - name: KVM - Stop all bundle VMs
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: false
+    project: Device Edge Codebase
+    playbook: playbooks/kvm_stop_all_bundle_vms.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    ask_variables_on_launch: true
+    extra_vars: 
+        vm_bundle: "changeme"
+
+  - name: KVM - Start all bundle VMs
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: false
+    project: Device Edge Codebase
+    playbook: playbooks/kvm_start_all_bundle_vms.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    ask_variables_on_launch: true
+    extra_vars: 
+        vm_bundle: "changeme"
+
+
+
 controller_workflows:
 
   - name: Deploy service in VM
@@ -596,12 +626,12 @@ controller_workflows:
     extra_vars: 
         vm_bundle: "changeme"
     simplified_workflow_nodes:
-      - identifier: Configure KVM Host
-        unified_job_template: Configure KVM Host
+      - identifier: KVM - Configure Host
+        unified_job_template: KVM - Configure Host
         success_nodes:
-          - Deploy VM
-      - identifier: Deploy VM
-        unified_job_template: Deploy VM
+          - KVM - Deploy VM
+      - identifier: KVM - Deploy VM
+        unified_job_template: KVM - Deploy VM
 
   - name: OSTree Upgrade
     organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"

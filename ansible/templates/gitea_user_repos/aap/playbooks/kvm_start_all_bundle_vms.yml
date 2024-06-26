@@ -1,0 +1,32 @@
+{% raw %}
+---
+- name: Start all bundle VMs
+  hosts: all
+  gather_facts: no
+  
+  tasks:
+    - set_fact:
+        _is_matching_host: "{{ hostvars[inventory_hostname].kvm_type == vm_bundle }}"
+      when: hostvars[inventory_hostname].kvm_type is defined
+
+    - name: Create resources if the host is part of the list matching kvm_type
+      when: _is_matching_host | default(false)
+      block:  
+        - name: Get list of all VMs
+          community.libvirt.virt:
+            command: list_vms
+            state: shutoff
+          register: shutoff_vms
+
+        - name: Start VMs
+          community.libvirt.virt:
+            name: "{{ item }}"
+            state: running
+          loop: "{{ shutoff_vms.list_vms }}"
+          register: start_results
+
+        - name: Display results
+          debug:
+            msg: "VM {{ item.name }} start {{ 'succeeded' if item.changed else 'was already running' }}"
+          loop: "{{ start_results.results }}"
+{% endraw %}

@@ -1,0 +1,36 @@
+{% raw %}
+---
+- name: Stop all bundle VMs
+  hosts: all
+  gather_facts: no
+  
+  tasks:
+    - set_fact:
+        _is_matching_host: "{{ hostvars[inventory_hostname].kvm_type == vm_bundle }}"
+      when: hostvars[inventory_hostname].kvm_type is defined
+
+    - name: Create resources if the host is part of the list matching kvm_type
+      when: _is_matching_host | default(false)
+      block:  
+        - name: Get list of running VMs
+          community.libvirt.virt:
+            command: list_vms
+            state: running
+          register: running_vms
+
+        - name: Stop VMs
+          community.libvirt.virt:
+            name: "{{ item }}"
+            state: shutdown
+          loop: "{{ running_vms.list_vms }}"
+          register: stop_results
+
+        - name: Display results
+          debug:
+            msg: "VM {{ item.name }} stop {{ 'succeeded' if item.changed else 'failed' }}"
+          loop: "{{ stop_results.results }}"
+
+        - name: Summary
+          debug:
+            msg: "Stopped {{ stop_results.results | selectattr('changed') | list | length }} out of {{ running_vms.list_vms | length }} running VMs"
+{% endraw %}
