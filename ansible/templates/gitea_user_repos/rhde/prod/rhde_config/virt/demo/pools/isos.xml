@@ -1,0 +1,14 @@
+<pool type='dir'>
+  <name>isos</name>
+  <source>
+  </source>
+  <target>
+    <path>/var/lib/libvirt/isos</path>
+    <permissions>
+      <mode>0755</mode>
+      <owner>0</owner>
+      <group>0</group>
+      <label>unconfined_u:object_r:var_t:s0</label>
+    </permissions>
+  </target>
+</pool>

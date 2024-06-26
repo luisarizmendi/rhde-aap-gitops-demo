@@ -1,0 +1,10 @@
+<network>
+  <name>isolated</name>
+  <bridge name='virbr2' stp='on' delay='0'/>
+  <domain name='isolated' localOnly='yes'/>
+  <dns>
+    <host ip='192.168.200.1'>
+      <hostname>gateway</hostname>
+    </host>
+  </dns>
+</network>

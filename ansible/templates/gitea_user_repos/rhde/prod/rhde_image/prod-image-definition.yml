@@ -18,6 +18,22 @@ builder_compose_pkgs:
   - "setroubleshoot-server"
   - "slirp4netns"
   - "net-tools"
+  - cockpit
+  - cockpit-machines
+  - cockpit-podman
+  - cockpit-system
+  - cockpit-bridge
+  - cockpit-pcp
+  - cockpit-storaged
+  - cockpit-session-recording
+  - libvirt-daemon-config-network
+  - libvirt-daemon-kvm
+  - qemu-kvm
+  - qemu-img
+  - virt-install
+  - libguestfs-tools
+  - python3-libguestfs
+  - virt-top
   - "git"
   - inotify-gitops
   - workload-manifests
@@ -31,7 +47,7 @@ builder_compose_customizations:
     {% endraw %}password: "{{ rhde_user_password }}"
     groups: ["users", "wheel"]
   services:
-    enabled: ["microshift"]
+    enabled: ["microshift", "cockpit.socket"]
   firewall:
-    ports: ["22:tcp", "80:tcp", "443:tcp", "6443:tcp", "5353:udp", "30000-32767:tcp", "30000-32767:udp"]
+    ports: ["22:tcp", "80:tcp", "443:tcp", "6443:tcp", "5353:udp", "30000-32767:tcp", "30000-32767:udp", "9090:tcp"]
 

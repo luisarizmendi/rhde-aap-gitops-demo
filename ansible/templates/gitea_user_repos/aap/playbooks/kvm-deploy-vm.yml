@@ -1,0 +1,122 @@
+{% raw %}
+---
+- name: Configure libvirt resources
+  hosts: all
+  gather_facts: true
+  tasks:
+
+    - name: Get the files for VMs
+      delegate_to: localhost
+      block:
+        - name: Remove the local clone
+          file:
+            path: "{{ local_clone_path | default('/tmp/repo_clone') }}"
+            state: absent
+
+        - name: Create temp directory
+          file:
+            path: "{{ local_clone_path | default('/tmp/repo_clone') }}"
+            state: directory
+
+        - name: Extract protocol from git_repo_url
+          set_fact:
+            git_repo_url_http: "{{ git_repo_url | regex_search('^(http|https)') | default('') }}"
+
+        - name: Remove protocol from git_repo_url
+          set_fact:
+            git_repo_url_nohttp: "{{ git_repo_url | regex_replace('^(http|https)://', '') }}"
+   
+        - name: Clone repo 
+          ansible.builtin.shell:            
+            cmd: "git clone {{ git_repo_url_http }}://{{ git_user }}:'{{ git_password }}'@{{ git_repo_url_nohttp }} {{ local_clone_path | default('/tmp/repo_clone') }}"
+
+        - name: Get file paths
+          set_fact:
+            _virt_files_path: "{{ local_clone_path | default('/tmp/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ path }}/{{ vm_bundle }}"
+
+        - name: Find all files in the source directory
+          find:
+            paths: "{{ _virt_files_path }}"
+            recurse: yes
+            file_type: file
+          register: found_files
+
+        - name: Get file paths
+          set_fact:
+            _virt_files_filenames: "{{ found_files.files | map(attribute='path')  | list }}"
+
+        - name: Get vm.xml files
+          set_fact:
+            _vm_files: "{{ _virt_files_filenames | select('search', '/vm.xml') | list }}"
+
+        - name: Create _vm_files_path variable
+          set_fact:
+            _vm_files_path: "{{ _vm_files | map('dirname') | list }}"
+
+        - name: Get list of vm names
+          xml:
+            path: "{{ item }}"
+            xpath: "/domain/name"
+            content: text
+          register: _vm_names
+          loop: "{{ _vm_files }}"
+
+        - name: Import variables from requirements.yml
+          include_vars:
+            file: "{{ local_clone_path | default('/tmp/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ path }}/{{ vm_bundle }}/requirements.yml"
+            name: vm_requirements
+ 
+    - set_fact:
+        _is_matching_host: "{{ hostvars[inventory_hostname].kvm_type == vm_bundle }}"
+      when: hostvars[inventory_hostname].kvm_type is defined
+
+    - name: Create the VM
+      when: _is_matching_host | default(false)
+      block:
+
+        - name: Download disk images for all VMs
+          get_url:
+            url: "{{ item.1.source }}"
+            dest: "{{ item.1.location }}"
+            mode: '0644'
+          loop: "{{ vm_requirements | dict2items | subelements('value.disks') }}"
+          loop_control:
+            label: "Downloading {{ item.1.location | basename }}"
+
+        - name: Create directories
+          file:
+            path: "/tmp{{ item }}"
+            state: directory
+          loop: "{{ _vm_files_path }}"
+
+        - name: Copy vm XML files
+          copy:
+            force: yes
+            src: "{{ item }}/vm.xml"
+            dest: "/tmp{{ item }}/vm.xml"
+          loop: "{{ _vm_files_path }}"
+
+        - name: Create VMs
+          ignore_errors: yes
+          shell: "virsh define /tmp{{ item }}/vm.xml"
+          loop: "{{ _vm_files_path }}"
+
+        - name: Remove VM XML files
+          file:
+            path: "/tmp{{ item }}"
+            state: absent
+          loop: "{{ _vm_files_path }}"
+
+        - name: Set autostart for VMs
+          ignore_errors: yes
+          shell: "virsh autostart {{ item }}"
+          loop: "{{ _vm_names.results | map(attribute='matches') | map('first') | map(attribute='name') | list }}"
+
+        - name: Start VMs
+          ignore_errors: yes
+          shell: "virsh start {{ item }}"
+          loop: "{{ _vm_names.results | map(attribute='matches') | map('first') | map(attribute='name') | list }}"
+
+
+
+{% endraw %}

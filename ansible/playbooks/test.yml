@@ -27,7 +27,7 @@
         aap_repo_name: aap
         include_image_builder: false
         include_fdo: false
-        include_aap: false
+#        include_aap: false
 #        include_gitea: false
         include_vpn: false
         ### DEMO SPECIFIC VARS

@@ -1,0 +1,162 @@
+{% raw %}
+---
+- name: Configure libvirt resources
+  hosts: all
+  gather_facts: true
+  tasks:
+
+    - name: Get the files for VMs
+      delegate_to: localhost
+      block:
+        - name: Remove the local clone
+          file:
+            path: "{{ local_clone_path | default('/tmp/repo_clone') }}"
+            state: absent
+
+        - name: Create temp directory
+          file:
+            path: "{{ local_clone_path | default('/tmp/repo_clone') }}"
+            state: directory
+
+        - name: Extract protocol from git_repo_url
+          set_fact:
+            git_repo_url_http: "{{ git_repo_url | regex_search('^(http|https)') | default('') }}"
+
+        - name: Remove protocol from git_repo_url
+          set_fact:
+            git_repo_url_nohttp: "{{ git_repo_url | regex_replace('^(http|https)://', '') }}"
+   
+        - name: Clone repo 
+          ansible.builtin.shell:            
+            cmd: "git clone {{ git_repo_url_http }}://{{ git_user }}:'{{ git_password }}'@{{ git_repo_url_nohttp }} {{ local_clone_path | default('/tmp/repo_clone') }}"
+
+        - name: Get file paths
+          set_fact:
+            _virt_files_path: "{{ local_clone_path | default('/tmp/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ path }}/{{ vm_bundle }}"
+
+        - name: Find all files in the source directory
+          find:
+            paths: "{{ _virt_files_path }}"
+            recurse: yes
+            file_type: file
+          register: found_files
+
+        - name: Get file paths
+          set_fact:
+            _virt_files_filenames: "{{ found_files.files | map(attribute='path')  | list }}"
+
+        - name: Get network file paths
+          set_fact:
+            _virt_net_files_filenames: "{{ _virt_files_filenames | select('search', '/nets/') | list }}"
+
+        - name: Get pools file paths
+          set_fact:
+            _virt_pool_files_filenames: "{{ _virt_files_filenames | select('search', '/pools/') | list }}"
+
+   
+    - set_fact:
+        _is_matching_host: "{{ hostvars[inventory_hostname].kvm_type == vm_bundle }}"
+      when: hostvars[inventory_hostname].kvm_type is defined
+
+    - name: Create resources if the host is part of the list matching kvm_type
+      when: _is_matching_host | default(false)
+      block:  
+        - name: Create Networks
+          when: _virt_net_files_filenames | length > 0
+          block:
+
+            - name: Create directories
+              file:
+                path: "/etc/libvirt/networks"
+                state: directory
+
+            - name: Copy libvirt network XML file
+              copy:
+                force: yes
+                src: "{{ item }}"
+                dest: "/etc/libvirt/networks/{{ item | basename }}"
+              loop: "{{ _virt_net_files_filenames }}"
+
+            - name: Read network names from XML files
+              delegate_to: localhost
+              xml:
+                path: "{{ item }}"
+                xpath: "/network/name"
+                content: text
+              register: xml_content
+              loop: "{{ _virt_net_files_filenames }}"
+
+            - name: Set net_names variable
+              set_fact:
+                net_names: "{{ xml_content.results | map(attribute='matches') | map('first') | map(attribute='name') | list }}"
+
+            - name: Create virtual networks
+              ignore_errors: yes
+              shell: "virsh net-define /etc/libvirt/networks/{{ item | basename }}"
+              loop: "{{ _virt_net_files_filenames }}"
+
+            - name: Start virtual networks
+              ignore_errors: yes
+              shell: "virsh net-start {{ item }}"
+              loop: "{{ net_names }}"
+
+            - name: Set autostart for the network
+              ignore_errors: yes
+              shell: "virsh net-autostart {{ item }}"
+              loop: "{{ net_names }}"
+
+        - name: Create Pools
+          when: _virt_pool_files_filenames | length > 0
+          block:
+
+            - name: Create directories
+              file:
+                path: "/etc/libvirt/pools"
+                state: directory
+
+            - name: Copy libvirt pool XML file
+              copy:
+                force: yes
+                src: "{{ item }}"
+                dest: "/etc/libvirt/pools/{{ item | basename }}"
+              loop: "{{ _virt_pool_files_filenames }}"
+
+            - name: Read pool names from XML files
+              delegate_to: localhost
+              xml:
+                path: "{{ item }}"
+                xpath: "/pool/name"
+                content: text
+              register: pool_names
+              loop: "{{ _virt_pool_files_filenames }}"
+
+            - name: Read pool paths from XML files
+              delegate_to: localhost
+              xml:
+                path: "{{ item }}"
+                xpath: "/pool/target/path"
+                content: text
+              register: pool_paths
+              loop: "{{ _virt_pool_files_filenames }}"
+
+            - name: Create pool directories
+              file:
+                path: "{{ item }}"
+                state: directory
+              loop: "{{ pool_paths.results | map(attribute='matches') | map('first') | map(attribute='path') | list }}"
+
+            - name: Create storage pools
+              ignore_errors: yes
+              shell: "virsh pool-define /etc/libvirt/pools/{{ item | basename }}"
+              loop: "{{ _virt_pool_files_filenames }}"
+
+            - name: Start storage pools
+              ignore_errors: yes
+              shell: "virsh pool-start {{ item }}"
+              loop: "{{ pool_names.results | map(attribute='matches') | map('first') | map(attribute='name') | list }}"
+
+            - name: Set autostart for storage pools
+              ignore_errors: yes
+              shell: "virsh pool-autostart {{ item }}"
+              loop: "{{ pool_names.results | map(attribute='matches') | map('first') | map(attribute='name') | list }}"
+{% endraw %}

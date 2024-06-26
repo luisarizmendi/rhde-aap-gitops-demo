@@ -540,7 +540,68 @@ controller_templates:
     extra_vars: 
         command_to_execute: date
 
+
+  - name: Configure KVM Host
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: false
+    project: Device Edge Codebase
+    playbook: playbooks/kvm-configure.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    ask_variables_on_launch: true
+    extra_vars: 
+        git_repo_url: "http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/rhde"
+        git_user: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+        git_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+        path_prefix: "rhde_config"
+        env: "prod"
+        path: "virt"
+        vm_bundle: "changeme"
+
+
+  - name: Deploy VM
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    inventory: Edge Devices
+    ask_inventory_on_launch: false
+    project: Device Edge Codebase
+    playbook: playbooks/kvm-deploy-vm.yml
+    credentials:
+      - Device Credentials
+    execution_environment: Device Edge Execution Environment
+    become_enabled: true
+    ask_variables_on_launch: true
+    extra_vars: 
+        git_repo_url: "http://{{ gitea_ip | default(ansible_host) }}:{{ gitea_port | default('3000') }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/rhde"
+        git_user: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
+        git_password: "{{ aap_user_password }}{% raw %}{{ user_number }}{% endraw %}"
+        path_prefix: "rhde_config"
+        env: "prod"
+        path: "virt"
+        vm_bundle: "changeme"
+
+
 controller_workflows:
+
+  - name: Deploy service in VM
+    organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
+    state: present
+    allow_simultaneous: true
+    ask_inventory_on_launch: false
+    inventory: Edge Devices
+    survey_enabled: false
+    ask_variables_on_launch: true
+    extra_vars: 
+        vm_bundle: "changeme"
+    simplified_workflow_nodes:
+      - identifier: Configure KVM Host
+        unified_job_template: Configure KVM Host
+        success_nodes:
+          - Deploy VM
+      - identifier: Deploy VM
+        unified_job_template: Deploy VM
 
   - name: OSTree Upgrade
     organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"

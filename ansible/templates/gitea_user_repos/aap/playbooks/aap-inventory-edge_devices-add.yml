@@ -35,6 +35,8 @@
             variables:
               ansible_python_interpreter: "{{ ansible_playbook_python }}"
               ansible_host: "{{ ip_address }}"
+              user_number: "{{ user }}"
+              kvm_type: "none"
 
     - name: Run the redhat_cop.controller_configuration.hosts role
       ansible.builtin.include_role:
@@ -50,6 +52,7 @@
             organization: "{{ controller_username }} Organization"
             variables:
               user_number: "{{ user }}"
+              kvm_type: "none"
             state: present
 
     - name: create dedicated inventory

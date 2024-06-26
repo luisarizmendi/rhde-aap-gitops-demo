@@ -7,3 +7,4 @@ ipaddr
 kubernetes
 pyYAML
 jsonpatch
+lxml
