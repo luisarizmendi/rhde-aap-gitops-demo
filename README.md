@@ -393,7 +393,7 @@ If you want [to know more about FDO you can read this article series](https://lu
 
 Continue with the detailed steps to demo this section:
 
-* [Secure Onboarding with FDO](docs/s8-vm-management.md)
+* [Secure Onboarding with FDO](docs/s6-secure-onboarding-with-fdo.md)
 
 This section reviewed how you can take advantage of the Red Hat implementation of the FDO specification, and how you can use [Ignition](https://coreos.github.io/ignition/) to inject onboarding customizations in the Simplified Installer ISO created by the image builder.
 
