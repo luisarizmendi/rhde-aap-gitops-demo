@@ -257,6 +257,10 @@ Now is when you can show the different use cases.
 
   >**Note**
   >
+  > If you plugin the USB key right after the VM deployment nothing will happen for a while, the systemd service that review if USB keys are connected might not be up and also even if it's up Microshift could be not up yet... so it's better to let some time to have all services up and ready before connect the USB.
+
+  >**Note**
+  >
   >  If you are using Virtual Machine Manager with `libvirt` you can attach a USB by opening the VM, clicking on the "Virtual Machine" menu on the top and then "Redirect USB". If you are not sure which one is the USB stick you can physically disconnect and re-connect it to your laptop. If you cannot select the option (it's grey) you have to be sure that your user is part of the `libvirt` group.
 
 16. After plugin the USB key, you will know when the automation is done if you check the edge device console, since the screen asking for "a token" will dissappear when the automation is done (the kiosk-mode that was included for the other use case is also disabled when the secrets are introduced). If you find any issue with this part, you can tail the `/var/log/usb_check.log` file, where the outputs of the USB automation are dumped. When the Kiosk mode disappears, refresh `http://web-secret-http.apps.<ip>.nip.io`, you should see now the secrets.
