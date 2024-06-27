@@ -53,8 +53,6 @@ firewall-offline-cmd  --zone=public --add-port=80/tcp
 firewall-offline-cmd  --zone=public --add-port=443/tcp
 firewall-offline-cmd  --zone=public --add-port=6443/tcp
 
-firewall-offline-cmd --runtime-to-permanent
-
 cat > /etc/microshift/config.yaml <<EOF
 dns:
   baseDomain: "${IP_ADDRESS}.nip.io"
