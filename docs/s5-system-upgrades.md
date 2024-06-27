@@ -307,6 +307,8 @@ builder_compose_pkgs:
   - "git"
   - inotify-gitops
   - workload-manifests
+  - tcpdump
+  - kiosk-mode
   - zsh
 builder_compose_customizations:
   user:
