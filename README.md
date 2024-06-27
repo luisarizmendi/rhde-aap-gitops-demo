@@ -97,7 +97,7 @@ The lab architecture has been designed so you can deploy it where you don't have
 You can [take a look at this video playlist](https://www.youtube.com/watch?v=0lUhneAHwEE&list=PL8w3r6_M2eTrZtAcvB2-RjBey1SZ7PFu-) where you can see all the demo steps (you will also find these videos in each demo step section).
 
 
-[![Demo video playlist](https://img.youtube.com/vi/5c4uGhD0vjz29sYK/0.jpg)](https://www.youtube.com/watch?v=0lUhneAHwEE&list=PL8w3r6_M2eTrZtAcvB2-RjBey1SZ7PFu-)
+[![Demo video playlist](https://img.youtube.com/vi/0lUhneAHwEE/0.jpg)](https://www.youtube.com/watch?v=0lUhneAHwEE&list=PL8w3r6_M2eTrZtAcvB2-RjBey1SZ7PFu-)
 
 
 You can also watch this [other video](https://youtu.be/XCtfy7AqLLY) where you will find a **similar** flow of the demo but that is explained step by step.
@@ -461,7 +461,7 @@ During this section we are going to see some ideas about how to deploy VMs using
 
 Move into the specific demo steps now:
 
-* [Virtual Machine management](docs/s7-custom-offline-onboarding.md)
+* [Virtual Machine management](docs/s8-vm-management.md)
 
 Being able to run VMs along with containerized and non-containerized worklods in the same Red Hat Device Edge node gives you a great flexibility and the freedom to choose how you want to run you applications at the Edge, and thanks to Ansible Automation Platform and Event Driven Automation you can addopt the GitOps principles also for the management of legacy workloads such as the Virtual Machines.
 
