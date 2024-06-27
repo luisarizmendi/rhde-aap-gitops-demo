@@ -23,7 +23,7 @@ set -x
 
 
 if rpm -q libreswan &> /dev/null; then
-
+CONFIGURE_VPN=true
 conn_name=$(nmcli -t -f NAME con show | head -n 1)
 device_name=$(nmcli -t -f GENERAL.DEVICES con show "$conn_name" | head -n 1 | cut -d: -f2)
 IP_ADDRESS=$(nmcli -t -f IP4.ADDRESS con show "$conn_name" | head -n 1 | cut -d: -f2 | cut -d/ -f1)
@@ -32,6 +32,24 @@ MAC_ADDRESS_FORMAT=$(echo "$MAC_ADDRESS" | tr -d ':')
 IP_AAP_PRIVATE={{ aap_ip_private }}
 IP_AAP_PUBLIC={{ eda_ip | default(ansible_host) }}
 
+# Convert IP and network to binary for comparison
+IP_AAP_PUBLIC_BIN=$(printf '%08b%08b%08b%08b\n' $(echo "$IP_AAP_PUBLIC" | tr '.' ' '))
+NETWORK_192_BIN=$(printf '%08b%08b%08b%08b\n' 192 168 0 0)
+NETWORK_172_BIN=$(printf '%08b%08b%08b%08b\n' 172 16 0 0)
+
+# Apply the subnet masks
+IP_AAP_PUBLIC_192_SUBNET=$(echo "$IP_AAP_PUBLIC_BIN" | cut -b 1-16)
+NETWORK_192_SUBNET=$(echo "$NETWORK_192_BIN" | cut -b 1-16)
+
+IP_AAP_PUBLIC_172_SUBNET=$(echo "$IP_AAP_PUBLIC_BIN" | cut -b 1-12)
+NETWORK_172_SUBNET=$(echo "$NETWORK_172_BIN" | cut -b 1-12)
+
+# Check if the IP address is in the 192.168.0.0/16 or 172.16.0.0/12 range
+if [[ "$IP_AAP_PUBLIC_192_SUBNET" == "$NETWORK_192_SUBNET" ]] || [[ "$IP_AAP_PUBLIC_172_SUBNET" == "$NETWORK_172_SUBNET" ]]; then
+    echo "$IP_AAP_PUBLIC is in the 192.168.0.0/16 or 172.16.0.0/12 range. Exiting."
+    CONFIGURE_VPN=false
+fi
+if $CONFIGURE_VPN; then
 cat > /etc/ipsec.conf <<EOF
 config setup
     protostack=netkey
@@ -81,7 +99,7 @@ firewall-offline-cmd   --direct --add-rule ipv4 filter FORWARD 0 -s ${IP_AAP_PRI
 firewall-offline-cmd   --direct --add-rule ipv4 filter FORWARD 0 -s ${IP_AAP_PRIVATE}/32 -d 172.16.0.0/12 -j ACCEPT
 
 firewall-offline-cmd --runtime-to-permanent
-
+fi
 fi
 
 

@@ -33,6 +33,8 @@ During this demo, the following features will be shown:
   * Edge Device configuration enforcing (GitOps)
   * Podman auto-update rollback
 
+* Virtual Machine management
+
 * Extras:
   * Serverless rootless container applications with just Podman
 
@@ -199,48 +201,11 @@ This is the summary of the demo steps:
       9. Plug in the USB key and wait until the device reboots
       10. Check again the device images with `sudo rpm-ostree status`
 
+8. Section 8 - Bulletproof system upgrades
 
-
-## DEMO deployment
-
-## DEMO steps
-
-### 1 - Modify the RHDE image description
-
-* Go to Gitea in the edge management host at port `3000`
-* Log in as a user (by default `user<number>`/`password<number>`)
-* Modify the file in `rhde/prod/rhde_image/prod-image-definition.yml`. You can include the `bind-utils` package
-
-### 2 - Check that an Ansible Workflow automatically starts and build the new image
-
-* Log in the AAP Controller (port `8443`) as a regular user (by default `user<number>`/`password<number>`)
-* Check the "Jobs" view and see if a new Workflow has started 
-
-### 3 - Accept the image publishing in that Workflow once the image is created
-
-* Wait until the image is created, you can check the progress by using Cockpit (port `9090`)
-* Approve the image publishing in the Workflow
-
-### 4 - Create an ISO to deploy the image
-
-* Launch the `Create ISO Kickstart` task under "Templates" view in AAP Controller. Default variables should be ok unless you are not using default values for this demo
-* Download the ISO from the URL shown in the last `debug` message that you will find in the `Create ISO Kickstart` task output (maybe you need to "Reload output" when the task is done to see the debug message at the end)
-
-  >**Note**
-  >
-  > If you create/publish new versions of your image for your demo, you don't need to create additional ISO images, you will be able to re-use the same ISO while the environment (`prod`) or the image name changes.
-
-
-### 5 - Deploy the image in the edge device
-
-* Start the edge device from the ISO that you downloaded (using an USB if it's a physical device).
-* Wait until the deployment finishes. Then the device will reboot and use the local drive as first boot option
-* Wait a little bit until you see in AAP Controller a new Workflow execution (`Provision Edge Device` Workflow)
-
-
-### 6 - Check that the device is auto-registered in AAP and correctly onboarded (in this base demo it is just a change in the hostname)
-
-* Log into the edge deivice (you can check the IP in the AAP inventory)
-* Check that the hostname was changed and a new entry configured in `/etc/hosts`
-* You can also take a look at the Event Driven Automation Controller (port `8445`, credentials `admin`/`R3dh4t1!` if not customized during the deployment) to check out how the request were processed.
+    1. Go to Gitea and show files under `rhde/prod/rhde_config/virt`
+    2. Tag in the "Edge Devices" inventory one of the host by changing the variable `kvm_type` to the VM bundle name
+    3. Run the deployment of any VM bundle by running the "Deploy service in VM" Job selecting the bundle in the Survey
+    4. When the Workflow is finish, go to the device Cockpit (port `9090`) and check that the VMs and associated resources where created
+    5. Show how you can also manage the VMs lifecycle from the AAP by stopping all VMs associated to a VM bundle running the "KVM - Stop all bundle VMs" Job 
 

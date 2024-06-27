@@ -2,7 +2,14 @@
 ---
 - name: Configure libvirt resources
   hosts: all
-  gather_facts: true
+  gather_facts: true  
+  vars:
+    compressed_extensions:
+      - ".zip"
+      - ".tar"
+      - ".tar.gz"
+      - ".tar.bz2"
+      - ".tar.xz"
   tasks:
 
     - name: Get the files for VMs

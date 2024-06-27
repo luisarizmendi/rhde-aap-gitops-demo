@@ -50,6 +50,22 @@ builder_compose_pkgs:
   - "setroubleshoot-server"
   - "slirp4netns"
   - "net-tools"
+  - cockpit
+  - cockpit-machines
+  - cockpit-podman
+  - cockpit-system
+  - cockpit-bridge
+  - cockpit-pcp
+  - cockpit-storaged
+  - cockpit-session-recording
+  - libvirt-daemon-config-network
+  - libvirt-daemon-kvm
+  - qemu-kvm
+  - qemu-img
+  - virt-install
+  - libguestfs-tools
+  - python3-libguestfs
+  - virt-top
   - "git"
   - workload-manifests
   - zsh
@@ -272,6 +288,22 @@ builder_compose_pkgs:
   - "setroubleshoot-server"
   - "slirp4netns"
   - "net-tools"
+  - cockpit
+  - cockpit-machines
+  - cockpit-podman
+  - cockpit-system
+  - cockpit-bridge
+  - cockpit-pcp
+  - cockpit-storaged
+  - cockpit-session-recording
+  - libvirt-daemon-config-network
+  - libvirt-daemon-kvm
+  - qemu-kvm
+  - qemu-img
+  - virt-install
+  - libguestfs-tools
+  - python3-libguestfs
+  - virt-top
   - "git"
   - inotify-gitops
   - workload-manifests

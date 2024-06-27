@@ -593,9 +593,26 @@ controller_templates:
       - Device Credentials
     execution_environment: Device Edge Execution Environment
     become_enabled: true
-    ask_variables_on_launch: true
+    ask_variables_on_launch: false
     extra_vars: 
         vm_bundle: "changeme"
+    survey_enabled: true
+    survey_spec:
+      name: Deploy VM bundle Survey
+      description: Survey to deploy a VM bundle
+      spec:
+        - question_description: ''
+          min: 0
+          default: ''
+          max: 0
+          required: true
+          choices: |-
+            demo
+            frontback
+          new_question: true
+          variable: vm_bundle
+          question_name: 'Select VM bundle to deploy:'
+          type: multiplechoice
 
   - name: KVM - Start all bundle VMs
     organization: "{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %} Organization"
@@ -607,10 +624,26 @@ controller_templates:
       - Device Credentials
     execution_environment: Device Edge Execution Environment
     become_enabled: true
-    ask_variables_on_launch: true
+    ask_variables_on_launch: false
     extra_vars: 
         vm_bundle: "changeme"
-
+    survey_enabled: true
+    survey_spec:
+      name: Deploy VM bundle Survey
+      description: Survey to deploy a VM bundle
+      spec:
+        - question_description: ''
+          min: 0
+          default: ''
+          max: 0
+          required: true
+          choices: |-
+            demo
+            frontback
+          new_question: true
+          variable: vm_bundle
+          question_name: 'Select VM bundle to deploy:'
+          type: multiplechoice
 
 
 controller_workflows:
@@ -621,8 +654,24 @@ controller_workflows:
     allow_simultaneous: true
     ask_inventory_on_launch: false
     inventory: Edge Devices
-    survey_enabled: false
-    ask_variables_on_launch: true
+    survey_enabled: true
+    survey_spec:
+      name: Deploy VM bundle Survey
+      description: Survey to deploy a VM bundle
+      spec:
+        - question_description: ''
+          min: 0
+          default: ''
+          max: 0
+          required: true
+          choices: |-
+            demo
+            frontback
+          new_question: true
+          variable: vm_bundle
+          question_name: 'Select VM bundle to deploy:'
+          type: multiplechoice
+    ask_variables_on_launch: false
     extra_vars: 
         vm_bundle: "changeme"
     simplified_workflow_nodes:

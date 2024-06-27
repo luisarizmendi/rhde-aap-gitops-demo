@@ -161,7 +161,7 @@ For `prod-kickstart.ks`:
 
   >**Note**
   >
-  > It is *very important* that if you are deploying the edge management server locally and you are using a network in that range you don't enable the VPN on the server (`include_vpn: false` variable while deploying the lab) or if the VPN is enabled that you don't deploy the edge server with the VPN active (that means not including the `libreswan` package in the image definition) because there will be routing issues in that case.
+  > In order to connect a machine in the local network to the remote node using the already pre-configured VPN, you will need to use a local subnet contained in `192.168.0.0/16` or `172.16.0.0/12`. If you are deploying the edge management server locally and you are using a network in that range, the VPN won't be activated because otherwise there would be routing issues that will prevent you to connect to the edge servers (it's better in that case to deploy the lab with `include_vpn: false` or not including the `libreswan` package in the image definition).
 
   >**Note**
   >

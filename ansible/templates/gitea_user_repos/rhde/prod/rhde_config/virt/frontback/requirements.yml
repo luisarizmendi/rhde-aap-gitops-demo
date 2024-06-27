@@ -1,0 +1,8 @@
+haos:
+  disks:
+    - source: https://download.cirros-cloud.net/0.6.2/cirros-0.6.2-x86_64-disk.img
+      location: "/var/lib/libvirt/images/front.img"
+db:
+  disks:
+    - source: https://download.cirros-cloud.net/0.6.2/cirros-0.6.2-x86_64-disk.img
+      location: "/var/lib/libvirt/images/db.img"

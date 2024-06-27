@@ -1,5 +1,6 @@
 <domain type='kvm'>
-  <name>demo_vm1</name>
+  <name>front</name>
+  </metadata>
   <memory unit='KiB'>572864</memory>
   <currentMemory unit='KiB'>572864</currentMemory>
   <vcpu placement='static'>1</vcpu>
@@ -28,7 +29,7 @@
     <emulator>/usr/libexec/qemu-kvm</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2'/>
-      <source file='/var/lib/libvirt/images/demo_vm1.img'/>
+      <source file='/var/lib/libvirt/images/front.img'/>
       <target dev='vda' bus='virtio'/>
       <address type='pci' domain='0x0000' bus='0x04' slot='0x00' function='0x0'/>
     </disk>
@@ -117,6 +118,12 @@
       <source dev='enp1s0' mode='bridge'/>
       <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x07' slot='0x00' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <mac address='52:54:00:93:72:21'/>
+      <source network='isolated'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
     </interface>
     <serial type='pty'>
       <target type='isa-serial' port='0'>

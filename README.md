@@ -28,6 +28,7 @@ GitOps principles enable a seamless and auditable approach to infrastructure and
   - [Section 5 - Bulletproof system upgrades](#section-5---bulletproof-system-upgrades)
   - [Section 6 - Secure Onboarding with FDO](#section-6---secure-onboarding-with-fdo)
   - [Section 7 - Custom Offline Onboarding](#section-7---custom-offline-onboarding)
+  - [Section 8 - Virtual Machine management](#section-8---virtual-machine-management)
   - [Closing](#closing)
 
 
@@ -49,7 +50,7 @@ The VPN connection is optional, it's pre-configured and will be setup if you dep
 
   >**Note**
   >
-  > In order to connect a machine in the local network to the remote node using the already pre-configured VPN, you will need to use a local subnet contained in `192.168.0.0/16` or `172.16.0.0/12`. It is *very important* that if you are deploying the edge management server locally and you are using a network in that range you don't enable the VPN on the server (`include_vpn: false` variable while deploying the lab) or if the VPN is enabled that you don't deploy the edge server with the VPN active (that means not including the `libreswan` package in the image definition) because there will be routing issues in that case.
+  > In order to connect a machine in the local network to the remote node using the already pre-configured VPN, you will need to use a local subnet contained in `192.168.0.0/16` or `172.16.0.0/12`. If you are deploying the edge management server locally and you are using a network in that range, the VPN won't be activated because otherwise there would be routing issues that will prevent you to connect to the edge servers (it's better in that case to deploy the lab with `include_vpn: false` or not including the `libreswan` package in the image definition).
 
 ## Recommended Hardware
 
@@ -93,7 +94,10 @@ The lab architecture has been designed so you can deploy it where you don't have
 ## Pre-recorded video
 
 
-You can [take a look at this video](https://www.youtube.com/watch?v=0lUhneAHwEE&list=PL8w3r6_M2eTrZtAcvB2-RjBey1SZ7PFu-) where you can see all the demo steps (you will also find these videos in each demo step section).
+You can [take a look at this video playlist](https://www.youtube.com/watch?v=0lUhneAHwEE&list=PL8w3r6_M2eTrZtAcvB2-RjBey1SZ7PFu-) where you can see all the demo steps (you will also find these videos in each demo step section).
+
+
+[![Demo video playlist](https://img.youtube.com/vi/5c4uGhD0vjz29sYK/0.jpg)](https://www.youtube.com/watch?v=0lUhneAHwEE&list=PL8w3r6_M2eTrZtAcvB2-RjBey1SZ7PFu-)
 
 
 You can also watch this [other video](https://youtu.be/XCtfy7AqLLY) where you will find a **similar** flow of the demo but that is explained step by step.
@@ -141,6 +145,8 @@ The following concepts will be reviewed in this demo:
   * Auto rollbacks in Operating System Upgrades
   * Edge Device configuration enforcing (GitOps)
   * Podman auto-update rollback
+
+* Virtual Machine management
 
 * Extras:
   * Serverless rootless container applications with just Podman
@@ -387,7 +393,7 @@ If you want [to know more about FDO you can read this article series](https://lu
 
 Continue with the detailed steps to demo this section:
 
-* [Secure Onboarding with FDO](docs/s6-secure-onboarding-with-fdo.md)
+* [Secure Onboarding with FDO](docs/s8-vm-management.md)
 
 This section reviewed how you can take advantage of the Red Hat implementation of the FDO specification, and how you can use [Ignition](https://coreos.github.io/ignition/) to inject onboarding customizations in the Simplified Installer ISO created by the image builder.
 
@@ -439,6 +445,26 @@ We have seen how you can perform a secure onboarding by installing your own RPM 
 
 
 
+## Section 8 - Virtual Machine management
+
+In this Section we will cover the following topics:
+
+* Virtual Machine management
+
+---
+
+Sometimes you need to run Virtual Machines at the edge, maybe because you have legacy applications that are not modernized (maybe they can't be) or because your Software provider didn't containerized their bits yet.
+
+Red Hat Device Edge can also run VMs using the KVM hypervisor (libvirt), the same that uses Red Hat OpenShift Virtualization or Red Hat OpenStack. In this case RHDE does not provide a multinode control plane but you can use Ansible Automation Platform to manage your VMs from a central site, and if you make use of Event Driven Automation you could even start managing some aspects of your VM lifecycle management in a GitOps way.
+
+During this section we are going to see some ideas about how to deploy VMs using some basic GitOps principles (we will have the VM definition in a file in Gitea). 
+
+Move into the specific demo steps now:
+
+* [Virtual Machine management](docs/s7-custom-offline-onboarding.md)
+
+Being able to run VMs along with containerized and non-containerized worklods in the same Red Hat Device Edge node gives you a great flexibility and the freedom to choose how you want to run you applications at the Edge, and thanks to Ansible Automation Platform and Event Driven Automation you can addopt the GitOps principles also for the management of legacy workloads such as the Virtual Machines.
+
 
 ## Closing
 During the demo/workshot we saw:
@@ -451,7 +477,11 @@ During the demo/workshot we saw:
 
 * We configured our systems following the GitOps approach, enforcing the right configurations at scale in all our systems assuring the consistency even in case of a manual override locally
 
-* And finally we show how we prevent an OS system upgrade to break the desired behaviour of our edge computing edge devices, by performing a system rollback automatically when a failure was detected.
+* We show how we prevent an OS system upgrade to break the desired behaviour of our edge computing edge devices, by performing a system rollback automatically when a failure was detected.
+
+* You have seen how you can onboard your systems in multiple ways, from using simple Kickstart files, custom onboarding rpms or even FDO servers
+
+* And finally you also have seen how Red Hat Device Edge is so flexible that you can combine containerized and non-containerized worklods with your old virtual machines in the same device.
 
 The demo of Ansible Automation Platform and Red Hat Device Edge showcased several compelling features and capabilities that promise to bring significant benefits to our edge computing solutions. In particular, the self-healing capabilities and automation at scale offer the following advantages for our use cases in edge computing:
 

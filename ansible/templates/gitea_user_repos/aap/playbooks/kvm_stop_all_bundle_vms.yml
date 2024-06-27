@@ -25,12 +25,4 @@
           loop: "{{ running_vms.list_vms }}"
           register: stop_results
 
-        - name: Display results
-          debug:
-            msg: "VM {{ item.name }} stop {{ 'succeeded' if item.changed else 'failed' }}"
-          loop: "{{ stop_results.results }}"
-
-        - name: Summary
-          debug:
-            msg: "Stopped {{ stop_results.results | selectattr('changed') | list | length }} out of {{ running_vms.list_vms | length }} running VMs"
 {% endraw %}

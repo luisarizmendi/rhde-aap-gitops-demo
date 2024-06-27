@@ -15,18 +15,14 @@
         - name: Get list of all VMs
           community.libvirt.virt:
             command: list_vms
-            state: shutoff
-          register: shutoff_vms
+            state: shutdown
+          register: shutdown_vms
 
         - name: Start VMs
           community.libvirt.virt:
             name: "{{ item }}"
             state: running
-          loop: "{{ shutoff_vms.list_vms }}"
+          loop: "{{ shutdown_vms.list_vms }}"
           register: start_results
 
-        - name: Display results
-          debug:
-            msg: "VM {{ item.name }} start {{ 'succeeded' if item.changed else 'was already running' }}"
-          loop: "{{ start_results.results }}"
 {% endraw %}
