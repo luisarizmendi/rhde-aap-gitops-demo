@@ -122,7 +122,7 @@ resource "aws_instance" "edge_mgmt_vm" {
 
 resource "aws_eip" "edge_mgmt_eip" {
   instance = aws_instance.edge_mgmt_vm.id
-  vpc      = true
+  domain   = "vpc"
 
   tags = {
     Name = "Edge_MGMT_EIP"
