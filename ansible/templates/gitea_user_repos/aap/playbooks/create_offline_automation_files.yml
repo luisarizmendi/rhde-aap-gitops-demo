@@ -169,7 +169,7 @@
         - name: Copy private key file to repo
           delegate_to: localhost
           copy:
-            src: "{{ local_path_publickey | default('/tmp/offline-automation/encryption_privatekey.key') }}"
+            src: "{{ local_path_publickey | default('/tmp/offline-automation/encryption_privatekey.pem') }}"
             dest: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}/rhde-automation-pri.pem"
 
 
