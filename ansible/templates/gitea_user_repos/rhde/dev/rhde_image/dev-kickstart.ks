@@ -21,6 +21,14 @@ ostreesetup --nogpg --osname=rhel --remote=edge --url=file:///run/install/repo/o
 %post --log=/root/kickstart-post.log
 set -x
 
+while true; do
+    if nmcli -t -f NAME con show | head -n 1 &>/dev/null; then
+        echo "Ready"
+        break
+    fi
+    sleep 1
+done
+
 conn_name=$(nmcli -t -f NAME con show | head -n 1)
 device_name=$(nmcli -t -f GENERAL.DEVICES con show "$conn_name" | head -n 1 | cut -d: -f2)
 IP_ADDRESS=$(nmcli -t -f IP4.ADDRESS con show "$conn_name" | head -n 1 | cut -d: -f2 | cut -d/ -f1)
