@@ -21,13 +21,12 @@ ostreesetup --nogpg --osname=rhel --remote=edge --url=file:///run/install/repo/o
 %post --log=/root/kickstart-post.log
 set -x
 
-while true; do
-    if nmcli -t -f NAME con show | head -n 1 &>/dev/null; then
-        echo "Ready"
-        break
-    fi
+echo "Waiting for NetworkManager to be ready..."
+while ! systemctl is-active --quiet NetworkManager; do
     sleep 1
 done
+
+echo "NetworkManager is running."
 
 conn_name=$(nmcli -t -f NAME con show | head -n 1)
 device_name=$(nmcli -t -f GENERAL.DEVICES con show "$conn_name" | head -n 1 | cut -d: -f2)
