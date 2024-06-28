@@ -154,6 +154,10 @@ The steps are the following:
   >
   >  Do not forget to include the application container images when you paste the list of Microshift images
 
+  >**Note**
+  >
+  > The step where you get the latest images with the `Get list of Microshift offline images` Job is missing in the section video. I was using the latest images but I forgot to show how to run the Job and copy paste the right images in the image definition...sorry :-( 
+
 6. It's time to create the image, if you want to show that the GitOps approach with the webhook is working, just change something in the definion (add the `tcpdump` package for example). Same that it happened in previous section, that change will trigger a Workflow in AAP that will generate the image.
 
   >**Note**
