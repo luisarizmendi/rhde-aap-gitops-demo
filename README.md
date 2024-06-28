@@ -91,6 +91,10 @@ The lab architecture has been designed so you can deploy it where you don't have
   >
   > REMEMBER: In order to connect a machine in the local network to the remote node using the already pre-configured VPN, you will need to use a local subnet contained in `192.168.0.0/16` or `172.16.0.0/12`. It is *very important* that if you are deploying the edge management server locally and you are using a network in that range you don't enable the VPN on the server (`include_vpn: false` variable while deploying the lab) or if the VPN is enabled that you don't deploy the edge server with the VPN active (that means not including the `libreswan` package in the image definition) because there will be routing issues in that case.
 
+  >**Note**
+  >
+  > The first edge device that you deploy on the local environment will be the gateway for the VPN. If you turn that device off you will lose the connectivity for 1 or 2 minutes (you can see [here](https://github.com/luisarizmendi/rh_edge_mgmt/blob/main/roles/config_rh_edge_mgmt_node/templates/ipsec.conf.j2) the VPn configuration setup in the server by the collection) until the next device in the local net takes over. Bear this in mind becaouse your workflow when deploying a new device use to be: shutdown the VM that I'm running, and then create a new one to be onboarded... that will fail if you don't wait those 2 minutes since the ping will fail during the onboarding. You might keep the first VM running or just wait some time before starting the second VM
+
 ## Pre-recorded video
 
 
