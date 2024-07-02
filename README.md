@@ -27,6 +27,8 @@ GitOps principles enable a seamless and auditable approach to infrastructure and
   - [Section 4 - Edge computing APPs lifecycle management](#section-4---edge-computing-apps-lifecycle-management)
   - [Section 5 - Bulletproof system upgrades](#section-5---bulletproof-system-upgrades)
   - [Section 6 - Secure Onboarding with FDO](#section-6---secure-onboarding-with-fdo)
+  - [Section 7 - Custom Offline Onboarding](#section-7---custom-offline-onboarding)
+  - [Section 8 - Virtual Machine management](#section-8---virtual-machine-management)
   - [Closing](#closing)
 
 
@@ -34,36 +36,38 @@ GitOps principles enable a seamless and auditable approach to infrastructure and
 
 The demo takes at least 180 minutes with no breaks. If you have time, a break after each main section is recommended. 
 
-
+ >**Note**
+  >
+  > Some sections will need you to prepare the RHDE images in order to save some time.
 
 ## Lab Architecture
 
 This is the architecture deployed thanks to the [Ansible Collection](https://galaxy.ansible.com/ui/repo/published/luisarizmendi/rh_edge_mgmt/)
 
-![demo-arch](https://raw.githubusercontent.com/luisarizmendi/rh_edge_mgmt/main/docs/images/demo-arch.png)
+![demo-arch](docs/images/demo-arch.png)
 
 The VPN connection is optional, it's pre-configured and will be setup if you deploy your edge device with the `libreswan` package installed.
 
   >**Note**
   >
-  > In order to connect a machine in the local network to the remote node using the already pre-configured VPN, you will need to use a local subnet contained in `192.168.0.0/16` or `172.16.0.0/12`. It is *very important* that if you are deploying the edge management server locally and you are using a network in that range you don't enable the VPN on the server (`include_vpn: false` variable while deploying the lab) or if the VPN is enabled that you don't deploy the edge server with the VPN active (that means not including the `libreswan` package in the image definition) because there will be routing issues in that case.
+  > In order to connect a machine in the local network to the remote node using the already pre-configured VPN, you will need to use a local subnet contained in `192.168.0.0/16` or `172.16.0.0/12`. If you are deploying the edge management server locally and you are using a network in that range, the VPN won't be activated because otherwise there would be routing issues that will prevent you to connect to the edge servers (it's better in that case to deploy the lab with `include_vpn: false` or not including the `libreswan` package in the image definition).
 
 ## Recommended Hardware
 
   >**Note**
   >
-  > This Lab has been prepared for RHEL 9 x86 machines only (RHEL 9.4), `aarch64` architecrure is under testing.
+  > This Lab has been prepared and tested with x86 machines only.
 
 If you plan to use VMs you just need enough free resources in your laptop/server (more or less >6vCPUs, >14GB RAM, >150GB disk) for a couple of VMs:
 
 * Edge Management node: I've been able to deploy everything on a x86 VM with 4 vCores and 10GB of memory. Storage will depend on the number of RHDE images that you generate.
 
-* Edge Device: This will depend on what you install on top, but for the base deployment you can use 2 vCores, 3GB of memory and 50GB disk.
+* Edge Device: This will depend on what you install on top, but for the base deployment you can use 2 vCores (x86), 3GB of memory and 50GB disk.
 
 
 If you use physical hardware you probably will need:
 + Two (mini) x86 servers, one of them with (4vCPUs, 16GB RAM, 50GB+ disk and two network interfaces)
-+ One 2GB USB key
++ One 6 GB USB key
 + USB Keyboard (I use one of [this USB RFID mini keyboards](https://www.amazon.es/dp/B07RQBRRR7?psc=1&ref=ppx_yo2ov_dt_b_product_details), but be sure that it does not use just Bluetooth)
 + Video Cable (and HDMI - DisplayPort adapter if needed) and external Monitor to show boot console. If you don't want to use an external screen you can also use a [Video Capture card like this one](https://www.amazon.es/dp/B0CLNHT29F?ref=ppx_yo2ov_dt_b_product_details&th=1) that I use that can show the physical device video output as a video input (camera) in your laptop.
 + Access Point or Router if you don't have a cabled connection to Internet
@@ -77,8 +81,9 @@ If you use physical hardware you probably will need:
 
 
 
+
 ## Required connectivity
-Internet Connection with access to Red Hat sites, GitHub, Slack and Quay.io.
+Internet Connection with access to Red Hat sites, GitHub and Quay.io.
 
 The lab architecture has been designed so you can deploy it where you don't have access to the network to re-configure NAT entries, that means that potentially you could install the edge manager server in, let's say AWS, and the edge device in your local environment/venue network without having to re-configure the router. This is done (for demo pruposes, do not use at production please) using a VPN tunnel between the local and the remote server, so be sure that outgoing IPSec connections are allowed in the Venue firewall if using this setup.
 
@@ -86,14 +91,20 @@ The lab architecture has been designed so you can deploy it where you don't have
   >
   > REMEMBER: In order to connect a machine in the local network to the remote node using the already pre-configured VPN, you will need to use a local subnet contained in `192.168.0.0/16` or `172.16.0.0/12`. It is *very important* that if you are deploying the edge management server locally and you are using a network in that range you don't enable the VPN on the server (`include_vpn: false` variable while deploying the lab) or if the VPN is enabled that you don't deploy the edge server with the VPN active (that means not including the `libreswan` package in the image definition) because there will be routing issues in that case.
 
+  >**Note**
+  >
+  > The first edge device that you deploy on the local environment will be the gateway for the VPN. If you turn that device off you will lose the connectivity for 1 or 2 minutes (you can see [here](https://github.com/luisarizmendi/rh_edge_mgmt/blob/main/roles/config_rh_edge_mgmt_node/templates/ipsec.conf.j2) the VPn configuration setup in the server by the collection) until the next device in the local net takes over. Bear this in mind becaouse your workflow when deploying a new device use to be: shutdown the VM that I'm running, and then create a new one to be onboarded... that will fail if you don't wait those 2 minutes since the ping will fail during the onboarding. You might keep the first VM running or just wait some time before starting the second VM
+
 ## Pre-recorded video
 
 
-You can [take a look at this video](https://www.youtube.com/watch?v=0lUhneAHwEE&list=PL8w3r6_M2eTrZtAcvB2-RjBey1SZ7PFu-) where you can see all the demo steps (you will also find these videos in each demo step section).
+You can [take a look at this video playlist](https://www.youtube.com/watch?v=0lUhneAHwEE&list=PL8w3r6_M2eTrZtAcvB2-RjBey1SZ7PFu-) where you can see all the demo steps (you will also find these videos in each demo step section).
+
+
+[![Demo video playlist](https://img.youtube.com/vi/0lUhneAHwEE/0.jpg)](https://www.youtube.com/watch?v=0lUhneAHwEE&list=PL8w3r6_M2eTrZtAcvB2-RjBey1SZ7PFu-)
 
 
 You can also watch this [other video](https://youtu.be/XCtfy7AqLLY) where you will find a **similar** flow of the demo but that is explained step by step.
-
 
 
 # Red Hat Device Edge GitOps Lab deployment and demo steps
@@ -110,7 +121,7 @@ You can find the steps to deploy the lab here:
 
 The following concepts will be reviewed in this demo:
 
-* Create and publish an OSTree repository using a GitOps approach 
+* Create and publish an OSTree repository using a GitOps approach
 
 * Edge Device installation ISO generation:
   * Injecting kickstart in a base ISO (standard RHEL ISO)
@@ -124,21 +135,26 @@ The following concepts will be reviewed in this demo:
   * FDO process
 
 * Application deployment using:
-  * Podman 
+  * Podman
     * Using shell scripting
     * Using Quadlet descriptors (GitOps)
   * Microshift
     * Using Manifest (GitOps)
     * Using Help
   * Custom RPM
-  
+
+* Edge Device Upgrade
+
 * Edge Device Self-Healing
   * Auto rollbacks in Operating System Upgrades
   * Edge Device configuration enforcing (GitOps)
   * Podman auto-update rollback
 
+* Virtual Machine management
+
 * Extras:
   * Serverless rootless container applications with just Podman
+
 
 
 This is the summarized list of the steps (below you will find the detailed description in each section):
@@ -167,7 +183,7 @@ During this demo/workshop will explore how to achieve this consistency using the
 
 In this Section we will cover the following topics:
 
-* Create and publish an OSTree repository using a GitOps approach 
+* Create and publish an OSTree repository using a GitOps approach
 
 * Device Onboarding customization using the following different methods:
   * Kickstart
@@ -212,7 +228,7 @@ In this Section we will cover the following topics:
 
 In the first section we created the image and placed it on a web server. Now, we're going to deploy that image on the end device.
 
-In this demo/workshop we will be booting the device directly from the network (the local edge manager server will act as PXE server), eliminating the need for creating a USB with the ISO image, and creating a hands-off installation.
+In this demo we will be booting from the ISO bt you can also configure boot from network (PXE) using that image.
 
 These are the step descriptions for this section:
 
@@ -230,7 +246,7 @@ In this Section we will cover the following topics:
 
 * Application deployment using:
   * Custom RPM
-  
+
 * Edge Device Self-Healing
   * Edge Device configuration enforcing (GitOps)
 
@@ -254,14 +270,14 @@ The steps above shown how powerful is the usage of event driven automation, sinc
 In this Section we will cover the following topics:
 
 * Application deployment using:
-  * Podman 
+  * Podman
     * Using shell scripting
     * Using Quadlet descriptors (GitOps)
   * Microshift
     * Using Manifest (GitOps)
     * Using Help
   * Custom RPM
-  
+
 * Edge Device Self-Healing
   * Podman auto-update rollback
 
@@ -322,6 +338,8 @@ In summary, it's all about deciding where to place your workload and how you wan
 
 In this Section we will cover the following topics:
 
+* Edge Device Upgrade
+
 * Edge Device Self-Healing
   * Auto rollbacks in Operating System Upgrades
 
@@ -344,11 +362,13 @@ This time we shown just with a simple script that checks OS packages, but you ca
 With Greenboot you can create a trully bulletproof system upgrades, you won't find again problems like the ones described before that imply high costs and delays in case of edge computing use cases.
 
 
+
+
 ## Section 6 - Secure Onboarding with FDO
 
 In this Section we will cover the following topics:
 
-* Create and publish an OSTree repository using a GitOps approach 
+* Create and publish an OSTree repository using a GitOps approach
 
 * Edge Device installation ISO generation:
   * Using Image Builder to create a Simplified installer
@@ -385,6 +405,71 @@ Thanks to FDO, you can get a secure onboarding process, removing the risk of som
 
 
 
+## Section 7 - Custom Offline Onboarding
+
+In this Section we will cover the following topics:
+
+* Create and publish an OSTree repository using a GitOps approach
+
+* Edge Device installation ISO generation:
+  * Injecting kickstart in a base ISO (standard RHEL ISO)
+
+* Device Onboarding customization using the following different methods:
+  * Kickstart
+  * Custom RPMs
+
+* Application deployment using:
+  * Custom RPM
+
+* Edge Device Upgrade
+---
+
+Sometimes you are in an environment with no external connectivity and you have to deploy containerized workloads (or just Microshift, which parts are containerized) in Red Hat Device Edge. In that case you will need to embed all the required components (container images, manifests, ...) in the image.
+
+
+Additionally, you probably will need to include secrets as part of your onboarding. Adding secrets to an image (if those are not encrypted) is not a good idea since someone can steal the image (ie. get the ISO) and then extract your secrets.
+
+Usually this problem can be solved by performing a "late binding" onboarding approach such as what you get with [FIDO FDO](https://fidoalliance.org/device-onboarding-overview/), but in a disconnected environment probably you won't have access to external servers (ie. FIDO FDO servers), so you will need to introduce those secrets after the deployment in another different way. 
+
+Several companies/people are including customizations and secrets as a second step right after the device deployment using a USB key or a manual entry using local keyboards and screens. 
+
+USBs are commonly used because it could happen that your edge devices lack of screens and even keyboard inputs, so one possible way to introduce those customizations is making that the device detects that someone has connected a USB key and then, automatically, gets the secrets, automations, etc from it and then applies them into the system.
+
+This also introduce some risks, for example, someone could stole the USB key and get access to the secrets, or someone could potentially change the automations and configure the system in the way that THEY want instead, not the way that YOU want. One easy way to remove those risks is to encrypt the contents of the USB key, so if you don't have the key you cannot access the contents, and also digitally sign the automations and secrets, in order to be completely sure that those have not been modified by somebody else.
+
+In this section we are going to see how we can use a USB key to trigger the onboarding automation. In addition, you will also see how you can trigger than onboarding automation by introducing a token using a keyboard and screen (if you have them in your device) instead using USB keys.
+
+As a "Bonus" step, you can see how to use the same "zero-touch" approach to automate the OSTree upgrade in an offline environment.
+
+Continue with the detailed steps to demo this section:
+
+* [Custom Offline Onboarding](docs/s7-custom-offline-onboarding.md)
+
+We have seen how you can perform a secure onboarding by installing your own RPM packages containing custom scripts. This is a great complement to the other methods reviewed before (kickstart, ignition and FDO servers) and gives you the flexibility to build any onboarding experience that you can imagine.
+
+
+
+## Section 8 - Virtual Machine management
+
+In this Section we will cover the following topics:
+
+* Virtual Machine management
+
+---
+
+Sometimes you need to run Virtual Machines at the edge, maybe because you have legacy applications that are not modernized (maybe they can't be) or because your Software provider didn't containerized their bits yet.
+
+Red Hat Device Edge can also run VMs using the KVM hypervisor (libvirt), the same that uses Red Hat OpenShift Virtualization or Red Hat OpenStack. In this case RHDE does not provide a multinode control plane but you can use Ansible Automation Platform to manage your VMs from a central site, and if you make use of Event Driven Automation you could even start managing some aspects of your VM lifecycle management in a GitOps way.
+
+During this section we are going to see some ideas about how to deploy VMs using some basic GitOps principles (we will have the VM definition in a file in Gitea). 
+
+Move into the specific demo steps now:
+
+* [Virtual Machine management](docs/s8-vm-management.md)
+
+Being able to run VMs along with containerized and non-containerized worklods in the same Red Hat Device Edge node gives you a great flexibility and the freedom to choose how you want to run you applications at the Edge, and thanks to Ansible Automation Platform and Event Driven Automation you can addopt the GitOps principles also for the management of legacy workloads such as the Virtual Machines.
+
+
 ## Closing
 During the demo/workshot we saw:
 
@@ -398,7 +483,9 @@ During the demo/workshot we saw:
 
 * We show how we prevent an OS system upgrade to break the desired behaviour of our edge computing edge devices, by performing a system rollback automatically when a failure was detected.
 
-* We performed a secure onboarding following the FDO specification and customizing our image with [Ignition](https://coreos.github.io/ignition/)
+* You have seen how you can onboard your systems in multiple ways, from using simple Kickstart files, custom onboarding rpms or even FDO servers
+
+* And finally you also have seen how Red Hat Device Edge is so flexible that you can combine containerized and non-containerized worklods with your old virtual machines in the same device.
 
 The demo of Ansible Automation Platform and Red Hat Device Edge showcased several compelling features and capabilities that promise to bring significant benefits to our edge computing solutions. In particular, the self-healing capabilities and automation at scale offer the following advantages for our use cases in edge computing:
 
@@ -413,3 +500,7 @@ The demo of Ansible Automation Platform and Red Hat Device Edge showcased severa
 In addition to these benefits, the demo also emphasized the scalability and adaptability of these solutions. As our edge computing infrastructure continues to grow, the ability to automate tasks and processes at scale becomes increasingly important. Ansible Automation Platform and Red Hat Device Edge can help us meet these demands by efficiently managing and orchestrating our edge devices and applications.
 
 Overall, the combination of Ansible Automation Platform and Red Hat Device Edge, with their self-healing capabilities and automation at scale, promises to simplify management, enable efficient over-the-air updates, ensure platform consistency, and provide unattended resilience for our edge computing solutions. These advantages are essential for our organization's success in the rapidly evolving world of edge computing.
+
+
+
+
