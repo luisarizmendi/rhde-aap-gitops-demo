@@ -4,7 +4,7 @@
   <currentMemory unit='KiB'>572864</currentMemory>
   <vcpu placement='static'>1</vcpu>
   <os>
-    <type arch='aarch64' machine='pc-q35-rhel9.2.0'>hvm</type>
+    <type arch='{{ system_arch | default('x86_64') }}' machine='pc-q35-rhel9.2.0'>hvm</type>
     <boot dev='hd'/>
   </os>
   <features>

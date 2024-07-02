@@ -1,0 +1,4 @@
+demo_vm1:
+  disks:
+    - source: https://github.com/cirros-dev/cirros/releases/download/0.6.2/cirros-0.6.2-{{ system_arch | default('x86_64') }}-disk.img
+      location: "/var/lib/libvirt/images/demo_vm1.img"
