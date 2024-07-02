@@ -20,7 +20,7 @@
 
             - name: Check if there is image definition file
               ansible.builtin.stat:
-                path: "/tmp/{{ ansible_host }}/repos/user1/images/{% raw %}{{ files_path }}/{{ simplified_installer_definition_file }}{% endraw %}"
+                path: "/tmp/{{ ansible_host }}/repos/{{ gitea_user_name }}{{ user_number }}/images/{% raw %}{{ files_path }}/{{ simplified_installer_definition_file }}{% endraw %}"
               register: vars_file_stat
               delegate_to: localhost
 

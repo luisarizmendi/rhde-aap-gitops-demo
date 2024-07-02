@@ -272,7 +272,7 @@ all:
 
 
 
-Also prepare the variables in the `playbooks/main.yml` playbook.
+Also prepare the variables in the `playbooks/main.yml` playbook choosing the system architecture, Microshift release, user and passwords, etc...
 
 
 ```yaml
@@ -287,6 +287,7 @@ Also prepare the variables in the `playbooks/main.yml` playbook.
         name: luisarizmendi.rh_edge_mgmt.setup_rh_edge_mgmt_node
       vars:
         ### COLLECTION VARS
+        system_arch: "x86_64"
         microshift: true
         microshift_release: 4.15
 
@@ -295,6 +296,7 @@ Also prepare the variables in the `playbooks/main.yml` playbook.
         name: luisarizmendi.rh_edge_mgmt.config_rh_edge_mgmt_node
       vars:
         ### COLLECTION VARS
+        system_arch: "x86_64"
         image_builder_admin_name: admin
         image_builder_admin_password: R3dh4t1!
         image_builder_custom_rpm_files:  ../templates/custom-rpms
@@ -345,6 +347,10 @@ skopeo copy docker://quay.io/luisarizmendi/simple-http:prod docker://quay.io/<yo
 
 Remember to change visibility of both 2048 and simple-http images to "public" in each "Repository Settings" 
 
+### Subscriptions
+
+The demo makes use of Microshift, which needs OCP and Fast-Datapath repositories enabled. Your subscription must have them available to be used.
+
 
 ## Deploy the lab
 
@@ -354,10 +360,23 @@ Remember to change visibility of both 2048 and simple-http images to "public" in
 
 
 ### If you want to use the optional Terraform script (use AWS)
-If you want to use the provided terraform script to create the server in AWS, you will need to move one level up in the directory and run:
+If you want to use the provided terraform script to create the server in AWS, you will need to move one level up in the directory and:
+
+1. Use the right Terraform variable file (either x86_64 or aach64) by copy the specific file to `terraform/rhel_vm.tfvars`, for example:
 
 ```shell
 cd ..
+cp terraform/rhel_vm.tfvars.x86_64 terraform/rhel_vm.tfvars
+```
+
+
+  >**Note**
+  >
+  > Take a look to the Terraform variables, you might want to change the region too.
+
+2. Run:
+
+```shell
 ./create.sh
 ```
 

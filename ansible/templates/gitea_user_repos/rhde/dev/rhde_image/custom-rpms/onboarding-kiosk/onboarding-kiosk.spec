@@ -11,7 +11,7 @@ Source4:    {{ gitea_user_name }}{{ user_number }}/deactivation_kiosk.sh
 Requires(pre): shadow-utils
 Requires: kiosk-mode
 BuildRequires: systemd-rpm-macros
-ExclusiveArch: x86_64
+ExclusiveArch: {{ system_arch | default('x86_64') }}
 
 %description
 Adds scripts to make the kiosk-based automation work

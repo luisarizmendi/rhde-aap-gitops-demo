@@ -3,7 +3,7 @@
 - name: Embed Kickstart in ISO
   hosts:
     - all
-  gather_facts: false 
+  gather_facts: true 
 
   tasks:
     - name: Creating ISO image with kickstart embedded
@@ -45,6 +45,7 @@
 
 
         - name: Legacy BIOS setup
+          when: ansible_architecture is not defined or ansible_architecture == "x86_64"
           block:
             - name: Modify isolinux configuration
               when: not offline
@@ -67,6 +68,7 @@
 
 
         - name: UEFI setup
+          when: ansible_architecture is not defined or ansible_architecture == "x86_64"
           block:
             - name: Modify grub.cfg configuration
               when: not offline
@@ -110,6 +112,7 @@
 
 
         - name: Create the final ISO image
+          when: ansible_architecture is not defined or ansible_architecture == "x86_64"
           shell: mkisofs -o {% raw %}{{ iso_dst_path }}/{{ image_environment }}{% endraw %}/isos/{{ gitea_user_name }}{{ user_number }}{% raw %}-{{ image_environment }}-rhel.iso{% endraw %} -b isolinux/isolinux.bin -J -R -l -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e images/efiboot.img -no-emul-boot -graft-points -joliet-long -V "{% raw %}{{ iso_label.stdout }}{% endraw %}" /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso
           changed_when: false
           args:
@@ -117,7 +120,42 @@
 
 
         - name: Make ISO hybrid for UEFI
-          ansible.builtin.shell: isohybrid --uefi {% raw %}{{ iso_dst_path }}/{{ image_environment }}{% endraw %}/isos/{{ gitea_user_name }}{{ user_number }}{% raw %}-{{ image_environment }}-rhel.iso{% endraw %}
+          ansible.builtin.shell: isohybrid --uefi {% raw %}{{ iso_dst_path }}/{{ image_environment }}{% endraw %}/isos/{{ gitea_user_name }}{{ user_number }}{% raw %}-{{ image_environment }}-rhel.iso
+          when: ansible_architecture is not defined or ansible_architecture == "x86_64"{% endraw %}
+
+
+
+
+        - name: Inject in aarch64 ISO
+          when: ansible_architecture == "aarch64"
+          block:
+            - name: Modify timeout setting in EFI/BOOT/grub.cfg
+              lineinfile:
+                path: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/EFI/BOOT/grub.cfg
+                regexp: 'timeout='
+                line: 'set timeout=1'
+
+            - name: Modify inst.ks and inst.stage2 settings in EFI/BOOT/grub.cfg
+              replace:
+                path: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/EFI/BOOT/grub.cfg
+                regexp: 'inst.stage2'
+                replace: 'inst.ks={% raw %}{{ kickstart_http_location }}{% endraw %} inst.stage2'
+
+
+            - name: Replace RHEL version in EFI/BOOT/grub.cfg
+              replace:
+                path: /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso/EFI/BOOT/grub.cfg
+                regexp: 'RHEL-\d+-\d+-\d-BaseOS-{% raw %}{{ basearch }}{% endraw %}"'
+                replace: '{% raw %}{{ iso_label.stdout }}{% endraw %}'
+
+            - name: Create custom ISO with xorriso
+              command: >
+                xorriso -as mkisofs
+                -V {% raw %}{{ iso_label.stdout }}{% endraw %}
+                -r -o {% raw %}{{ iso_dst_path }}/{{ image_environment }}{% endraw %}/isos/{{ gitea_user_name }}{{ user_number }}{% raw %}-{{ image_environment }}-rhel.iso{% endraw %}
+                -J -joliet-long -cache-inodes -efi-boot-part --efi-boot-image
+                -e images/efiboot.img -no-emul-boot
+                 /tmp/{{ gitea_user_name }}{{ user_number }}/rhel-iso
 
         - name: Add MD5 checksum
           shell: implantisomd5 {% raw %}{{ iso_dst_path }}/{{ image_environment }}{% endraw %}/isos/{{ gitea_user_name }}{{ user_number }}{% raw %}-{{ image_environment }}-rhel.iso

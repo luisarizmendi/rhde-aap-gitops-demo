@@ -4,7 +4,7 @@ Release:    rh1
 Summary:    Kubernetes Manifests for embedded APPs
 License:    BSD
 Source0:    {{ gitea_user_name }}{{ user_number }}/microshift-manifests.tar.gz
-ExclusiveArch: x86_64
+ExclusiveArch: {{ system_arch | default('x86_64') }}
 
 %description
 Kubernetes Manifests for embedded APPs

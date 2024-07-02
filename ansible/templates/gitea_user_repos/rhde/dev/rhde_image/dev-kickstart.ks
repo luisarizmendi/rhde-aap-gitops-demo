@@ -12,7 +12,7 @@ part pv.01 --grow
 volgroup rhel pv.01
 logvol / --vgname=rhel --fstype=xfs --percent=80 --name=root
 reboot
-graphical
+text
 user --name=ansible --groups=wheel --password='{{  gitea_user_password }}{{ user_number  }}'
 rootpw --plaintext --lock '{{  gitea_user_password }}{{ user_number  }}'
 services --enabled=ostree-remount

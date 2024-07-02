@@ -12,11 +12,11 @@ part pv.01 --grow
 volgroup rhel pv.01
 logvol / --vgname=rhel --fstype=xfs --percent=80 --name=root
 reboot
-graphical
+text
 user --name=ansible --groups=wheel --password='{{  gitea_user_password }}{{ user_number  }}'
 rootpw --plaintext --lock '{{  gitea_user_password }}{{ user_number  }}'
 services --enabled=ostree-remount
-ostreesetup --nogpg --url=http://{{ image_builder_ip | default(ansible_host) }}/{{  gitea_user_name }}{{ user_number  }}/prod/repo --osname=rhel --ref=rhel/9/x86_64/edge
+ostreesetup --nogpg --url=http://{{ image_builder_ip | default(ansible_host) }}/{{  gitea_user_name }}{{ user_number  }}/prod/repo --osname=rhel --ref=rhel/9/{{ system_arch | default('x86_64') }}/edge
 
 %post --log=/root/kickstart-post.log
 set -x
@@ -24,11 +24,18 @@ set -x
 
 if rpm -q libreswan &> /dev/null; then
 CONFIGURE_VPN=true
-conn_name=$(nmcli -t -f NAME con show | head -n 1)
-device_name=$(nmcli -t -f GENERAL.DEVICES con show "$conn_name" | head -n 1 | cut -d: -f2)
-IP_ADDRESS=$(nmcli -t -f IP4.ADDRESS con show "$conn_name" | head -n 1 | cut -d: -f2 | cut -d/ -f1)
-MAC_ADDRESS=$(nmcli -g GENERAL.HWADDR device show "$device_name" | tr -d '\\')
+
+#conn_name=$(nmcli -t -f NAME con show | head -n 1)
+#device_name=$(nmcli -t -f GENERAL.DEVICES con show "$conn_name" | head -n 1 | cut -d: -f2)
+#IP_ADDRESS=$(nmcli -t -f IP4.ADDRESS con show "$conn_name" | head -n 1 | cut -d: -f2 | cut -d/ -f1)
+#MAC_ADDRESS=$(nmcli -g GENERAL.HWADDR device show "$device_name" | tr -d '\\')
+#MAC_ADDRESS_FORMAT=$(echo "$MAC_ADDRESS" | tr -d ':')
+
+device_name=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2; exit}')
+IP_ADDRESS=$(ip -4 addr show dev "$device_name" | awk '/inet / {print $2}' | cut -d/ -f1)
+MAC_ADDRESS=$(ip link show dev "$device_name" | awk '/link\/ether/ {print $2}')
 MAC_ADDRESS_FORMAT=$(echo "$MAC_ADDRESS" | tr -d ':')
+
 IP_AAP_PRIVATE={{ aap_ip_private }}
 IP_AAP_PUBLIC={{ eda_ip | default(ansible_host) }}
 
@@ -98,12 +105,11 @@ firewall-offline-cmd   --direct --add-rule ipv4 nat POSTROUTING 0 -s ${IP_AAP_PR
 firewall-offline-cmd   --direct --add-rule ipv4 filter FORWARD 0 -s ${IP_AAP_PRIVATE}/32 -d 192.168.0.0/16 -j ACCEPT
 firewall-offline-cmd   --direct --add-rule ipv4 filter FORWARD 0 -s ${IP_AAP_PRIVATE}/32 -d 172.16.0.0/12 -j ACCEPT
 
-firewall-offline-cmd --runtime-to-permanent
 fi
 fi
 
 
-
+mkdir -p /var/tmp/
 
 
 cat > /var/tmp/aap-auto-registration.sh <<EOF

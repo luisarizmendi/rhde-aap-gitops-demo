@@ -14,7 +14,7 @@ Source7:    {{ gitea_user_name }}{{ user_number }}/usb_check.sh
 Requires(pre): shadow-utils
 Requires: kiosk-mode
 BuildRequires: systemd-rpm-macros
-ExclusiveArch: x86_64
+ExclusiveArch: {{ system_arch | default('x86_64') }}
 
 
 %description

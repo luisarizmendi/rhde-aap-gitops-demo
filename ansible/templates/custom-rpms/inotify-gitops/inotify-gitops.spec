@@ -8,7 +8,7 @@ Source1:    watch-etc.service
 Source2:    inotify-wait
 Requires:   python3-inotify
 Requires:   python3-pip
-ExclusiveArch: x86_64
+ExclusiveArch: {{ system_arch | default('x86_64') }}
 
 %description
 Checks ETC files are modified and if so send a webhook to AAP 

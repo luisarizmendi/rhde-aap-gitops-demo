@@ -17,7 +17,7 @@ Requires: gdm
 Requires: firefox
 Requires: accountsservice
 BuildRequires: systemd-rpm-macros
-ExclusiveArch: x86_64
+ExclusiveArch: {{ system_arch | default('x86_64') }}
 
 %description
 Custom config to run a RHEL workstation as kiosk

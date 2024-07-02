@@ -1,4 +1,0 @@
-demo_vm1:
-  disks:
-    - source: https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-20230704.1.x86_64.qcow2
-      location: "/var/lib/libvirt/images/demo_vm1.qcow2"

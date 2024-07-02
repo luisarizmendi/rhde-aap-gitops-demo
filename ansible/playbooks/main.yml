@@ -11,12 +11,14 @@
         ### COLLECTION VARS
         microshift: true
         microshift_release: 4.15
+        system_arch: "x86_64"
 
     - name: Config management node
       ansible.builtin.include_role:
         name: luisarizmendi.rh_edge_mgmt.config_rh_edge_mgmt_node
       vars:
         ### COLLECTION VARS
+        system_arch: "x86_64"
         image_builder_admin_name: admin
         image_builder_admin_password: R3dh4t1!
         image_builder_custom_rpm_files:  ../templates/custom-rpms

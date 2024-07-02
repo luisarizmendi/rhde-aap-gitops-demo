@@ -4,7 +4,7 @@ Release:    rh1
 Summary:    Checks ETC files are modified and if so send a webhook to AAP 
 License:    BSD
 Source0:    wait-microshift.sh
-ExclusiveArch: x86_64
+ExclusiveArch: {{ system_arch | default('x86_64') }}
 
 %description
 Checks ETC files are modified and if so send a webhook to AAP 

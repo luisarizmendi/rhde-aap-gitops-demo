@@ -1,4 +1,5 @@
 secrets.yml
+ansible/playbooks/test.yml
 
 ansible/playbooks/test.yml
 

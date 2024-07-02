@@ -2,7 +2,7 @@
 
 controller_execution_environments:
   - name: Device Edge Execution Environment
-    image: quay.io/luisarizmendi/provisioner-execution-environment:latest
+    image: quay.io/luisarizmendi/provisioner-execution-environment:{{ system_arch | default('x86_64') }}
     pull: missing
 
 controller_credential_types:
@@ -305,7 +305,7 @@ controller_templates:
       iso_base: "/usr/share/rhel-iso/rhel-boot.iso"
       kickstart_http_location: "http://{{ ansible_host }}/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}/prod/prod-kickstart.ks"
       iso_dst_path: "/var/www/html/{{ aap_user_name }}{% raw %}{{ user_number }}{% endraw %}"
-      basearch: "x86_64"
+      basearch: "{{ system_arch | default('x86_64') }}"
       offline: false
       image_environment: "prod"
 
@@ -607,7 +607,7 @@ controller_templates:
           max: 0
           required: true
           choices: |-
-            demo
+            demo-aarch64
             frontback
           new_question: true
           variable: vm_bundle
@@ -638,7 +638,7 @@ controller_templates:
           max: 0
           required: true
           choices: |-
-            demo
+            demo-aarch64
             frontback
           new_question: true
           variable: vm_bundle
@@ -665,7 +665,7 @@ controller_workflows:
           max: 0
           required: true
           choices: |-
-            demo
+            demo-aarch64
             frontback
           new_question: true
           variable: vm_bundle
