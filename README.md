@@ -56,13 +56,13 @@ The VPN connection is optional, it's pre-configured and will be setup if you dep
 
   >**Note**
   >
-  > This Lab has been prepared and tested with x86 machines only.
+  > This Lab has been prepared for RHEL 9 machines only (RHEL 9.4), `aarch64` architecrure is under testing.
 
 If you plan to use VMs you just need enough free resources in your laptop/server (more or less >6vCPUs, >14GB RAM, >150GB disk) for a couple of VMs:
 
 * Edge Management node: I've been able to deploy everything on a x86 VM with 4 vCores and 10GB of memory. Storage will depend on the number of RHDE images that you generate.
 
-* Edge Device: This will depend on what you install on top, but for the base deployment you can use 2 vCores (x86), 3GB of memory and 50GB disk.
+* Edge Device: This will depend on what you install on top, but for the base deployment you can use 2 vCores, 3GB of memory and 50GB disk.
 
 
 If you use physical hardware you probably will need:
