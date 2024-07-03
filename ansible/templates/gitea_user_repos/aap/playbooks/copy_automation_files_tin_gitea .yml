@@ -1,0 +1,191 @@
+{% raw %}
+---
+- name: "Create Offline automation contents"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Create files from vars
+      delegate_to: localhost
+      block:
+        - name: Create temp directory
+          file:
+            path: "{{ local_path | default('/tmp/offline-automation/') }}"
+            state: directory
+
+
+        - name: Create encryption pass file
+          copy:
+            content: "{{ encryption_pass }}"
+            dest: "{{ local_path_encryption_pass | default('/tmp/offline-automation/encryption_pass') }}"
+
+        - name: Show  encryption pass file
+          shell: "cat {{ local_path_encryption_pass | default('/tmp/offline-automation/encryption_pass') }}"
+
+
+        - name: Create publickey file
+          copy:
+            content: "{{ encryption_publickey }}"
+            dest: "{{ local_path_publickey | default('/tmp/offline-automation/encryption_publickey.key') }}"
+
+        - name: Show publickey file
+          shell: "cat {{ local_path_publickey | default('/tmp/offline-automation/encryption_publickey.key') }}"
+
+        - name: Create privatekey file
+          copy:
+            content: "{{ encryption_privatekey }}"
+            dest: "{{ local_path_privatekey | default('/tmp/offline-automation/encryption_privatekey.pem') }}"
+
+        - name: Show privatekey file
+          shell: "cat {{ local_path_privatekey | default('/tmp/offline-automation/encryption_privatekey.pem') }}"
+
+
+
+    - name: Get the files
+      delegate_to: localhost
+      block:
+        - name: Remove the local clone
+          file:
+            path: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}"
+            state: absent
+
+        - name: Create temp directory
+          file:
+            path: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}"
+            state: directory
+
+        - name: Extract protocol from git_repo_url
+          set_fact:
+            git_repo_url_http: "{{ git_repo_url | regex_search('^(http|https)') | default('') }}"
+
+        - name: Remove protocol from git_repo_url
+          set_fact:
+            git_repo_url_nohttp: "{{ git_repo_url | regex_replace('^(http|https)://', '') }}"
+   
+        - name: Clone repo 
+          ansible.builtin.shell:            
+            cmd: "git clone {{ git_repo_url_http }}://{{ git_user }}:'{{ git_password }}'@{{ git_repo_url_nohttp }} {{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}"
+
+        - name: Get file paths
+          set_fact:
+            _files_path: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ path }}"
+
+        - name: Find all files in the source directory
+          find:
+            paths: "{{ _files_path }}"
+            recurse: yes
+            file_type: file
+          register: _found_files
+
+        - name: Get file paths
+          set_fact:
+            _files_names: "{{ _found_files.files | map(attribute='path')  | list }}"
+
+
+    - name: Create signed file
+      delegate_to: localhost
+      block:
+
+        - name: Remove temporary folder
+          file:
+            path: "{{ tmp_folder | default('/tmp/offline-automation/files') }}"
+            state: absent
+
+        - name: Create offline-automation folder
+          file:
+            path: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde-automation"
+            state: directory
+
+        - name: Copy automation scripts to offline-automation folder
+          copy:
+            src: "{{ _files_path }}/"
+            dest: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde-automation"
+
+        - name: Create signed file
+          archive:
+            path: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde-automation"
+            dest: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signed_file | default('rhde-automation.tar.gz') }}"
+            format: gz
+
+        - name: Generate signature
+          shell: openssl dgst -sha256 -sign "{{ local_path_privatekey | default('/tmp/offline-automation/encryption_privatekey.pem') }}" -out "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signature_file | default('rhde-automation-signature.sha256') }}" "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signed_file | default('rhde-automation.tar.gz') }}"
+
+        - name: Create rhde directory
+          file:
+            path: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde"
+            state: directory
+
+        - name: Move signature file to rhde directory
+          shell: mv "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signature_file | default('rhde-automation-signature.sha256') }}" "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde/"
+
+        - name: Move signed file to rhde directory
+          shell: mv "{{ tmp_folder | default('/tmp/offline-automation/files') }}/{{ signed_file | default('rhde-automation.tar.gz') }}" "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde/"
+
+
+    - name: Create encrypted file
+      delegate_to: localhost
+      block:
+
+        - name: Create tar archive
+          shell: tar -C "{{ tmp_folder | default('/tmp/offline-automation/files') }}/" -cf "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde.tar" rhde/
+
+        - name: Encrypt tar archive
+          shell: openssl enc -aes-256-cbc -salt -in "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde.tar" -out "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde_encrypted.tar" -pass "file:{{ local_path_encryption_pass | default('/tmp/offline-automation/encryption_pass') }}" -pbkdf2
+
+
+    - name: Push files to Gitea
+      delegate_to: localhost
+      block:
+        - name: Remove output directory
+          file:
+            path: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}"
+            state: absent
+
+        - name: Create output directory
+          file:
+            path: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}"
+            state: directory
+
+        - name: Copy /rhde_encrypted.tar file to repo
+          ansible.builtin.copy:
+            src: "{{ tmp_folder | default('/tmp/offline-automation/files') }}/rhde_encrypted.tar"
+            dest: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}/rhde_encrypted.tar"
+
+
+        - name: Copy encrypted pass file to repo
+          delegate_to: localhost
+          copy:
+            src: "{{ local_path_encryption_pass | default('/tmp/offline-automation/encryption_pass') }}"
+            dest: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}/rhde_automation_encryption_key"
+
+
+        - name: Copy public key file to repo
+          delegate_to: localhost
+          copy:
+            src: "{{ local_path_publickey | default('/tmp/offline-automation/encryption_publickey.key') }}"
+            dest: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}/rhde-automation-pub.pem"
+
+
+
+        - name: Copy private key file to repo
+          delegate_to: localhost
+          copy:
+            src: "{{ local_path_publickey | default('/tmp/offline-automation/encryption_privatekey.pem') }}"
+            dest: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}/rhde-automation-pri.pem"
+
+
+
+        - name: Push rhde_encrypted.tar"
+          shell: |
+            cd {{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/
+            git config user.name "{{ git_user }}"
+            git config user.email "dont@email.me"
+            git add .
+            git commit -m "offline-automation output files"
+            git push
+
+        - name: Remove temporary folder
+          file:
+            path: "{{ local_path | default('/tmp/offline-automation/') }}"
+            state: absent
+
+{% endraw %}
