@@ -343,7 +343,18 @@ skopeo copy docker://quay.io/luisarizmendi/2048:prod docker://quay.io/<your-quay
 skopeo copy docker://quay.io/luisarizmendi/simple-http:v1 docker://quay.io/<your-quay-user>/simple-http:v1
 skopeo copy docker://quay.io/luisarizmendi/simple-http:v2 docker://quay.io/<your-quay-user>/simple-http:v2
 skopeo copy docker://quay.io/luisarizmendi/simple-http:prod docker://quay.io/<your-quay-user>/simple-http:prod
+
+skopeo copy docker://quay.io/luisarizmendi/2048:x86_64-v1 docker://quay.io/<your-quay-user>/2048:x86_64-v1
+skopeo copy docker://quay.io/luisarizmendi/2048:x86_64-v2 docker://quay.io/<your-quay-user>/2048:x86_64-v2
+skopeo copy docker://quay.io/luisarizmendi/2048:x86_64-v3 docker://quay.io/<your-quay-user>/2048:x86_64-v3
+skopeo copy docker://quay.io/luisarizmendi/simple-http:x86_64-v1 docker://quay.io/<your-quay-user>/simple-http:x86_64-v1
+skopeo copy docker://quay.io/luisarizmendi/simple-http:x86_64-v2 docker://quay.io/<your-quay-user>/simple-http:x86_64-v2
+
 ```
+
+  >**Note**
+  >
+  > If you are using an `aarch64` architecture change `x86_64` by `aarch64`
 
 Remember to change visibility of both 2048 and simple-http images to "public" in each "Repository Settings" 
 
@@ -416,13 +427,13 @@ These pre-flight checks should be performed just right after the deployment. You
 
 2) Check container images in your registry (Quay in our example):
 
-Go to `quay.io` in the 2024 repository and check that the "prod" tag is pointing to "v1". If not just create a new Tag "prod" by pressing the gearwheel on the "v1" label (at the right).
+Go to `quay.io` in the 2024 repository and check that the "prod" tag is pointing to "v1", and also if it's maching your system architecture (`x86_64-v1` or `aarch64-v1`).If not just create a new Tag "prod" by pressing the gearwheel on the "v1" label (at the right).
 
 
 ![2048 tags](images/rhde_gitops_quay-2048.png)
 
 
-You should also check that the image in the `rhde/<environment>/rhde_config/apps/microshift/manifest/2048/app_2048-microshift-2-deploy.yml` file on Gitea is `v1` and not `v3`.
+You should also check that the image in the `rhde/<environment>/rhde_config/apps/microshift/manifest/2048/app_2048-microshift-2-deploy.yml` file on Gitea is `v1` and not `v3`. As before, be also sure that it's maching your system architecture (`x86_64-v1` or `aarch64-v1`).
 
 If this environment was never used probably it will be correctly assigned but if you already ran the demo the "prod" tag will be probably pointing to "v3".
 

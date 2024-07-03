@@ -35,7 +35,13 @@ podman push ${registry}/2048:v2
 podman push ${registry}/2048:v3
 
 podman tag ${registry}/2048:v1 ${registry}/2048:prod
+podman tag ${registry}/2048:v1 ${registry}/2048:x86_64-v1
+podman tag ${registry}/2048:v2 ${registry}/2048:x86_64-v2
+podman tag ${registry}/2048:v3 ${registry}/2048:x86_64-v3
 podman push ${registry}/2048:prod
+podman push ${registry}/2048:x86_64-v1
+podman push ${registry}/2048:x86_64-v2
+podman push ${registry}/2048:x86_64-v3
 
 cd ..
 
@@ -48,12 +54,18 @@ podman push ${registry}/simple-http:v1
 podman push ${registry}/simple-http:v2
 
 podman tag ${registry}/simple-http:v1 ${registry}/simple-http:prod
+podman tag ${registry}/simple-http:v1 ${registry}/simple-http:x86_64-v1
+podman tag ${registry}/simple-http:v2 ${registry}/simple-http:x86_64-v2
 podman push ${registry}/simple-http:prod
+podman push ${registry}/simple-http:x86_64-v1
+podman push ${registry}/simple-http:x86_64-v2
 
 cd ..
 ```
 
-
+  >**Note**
+  >
+  > If you are using an `aarch64` architecture change `x86_64` by `aarch64`
 
 
 

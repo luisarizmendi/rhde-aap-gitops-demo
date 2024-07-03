@@ -36,7 +36,7 @@ GitOps principles enable a seamless and auditable approach to infrastructure and
 
 The demo takes at least 180 minutes with no breaks. If you have time, a break after each main section is recommended. 
 
- >**Note**
+  >**Note**
   >
   > Some sections will need you to prepare the RHDE images in order to save some time.
 

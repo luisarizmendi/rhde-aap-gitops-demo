@@ -12,8 +12,8 @@ builder_compose_pkgs:
   - {{ gitea_user_name }}{{ user_number }}-onboarding-kiosk
   - {{ gitea_user_name }}{{ user_number }}-microshift-manifests
 builder_compose_containers:
-  - quay.io/luisarizmendi/kiosk-token:latest
-  - quay.io/luisarizmendi/secret-http:latest
+  - quay.io/luisarizmendi/kiosk-token:{{ system_arch }}
+  - quay.io/luisarizmendi/secret-http:{{ system_arch }}
   - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:a4fd230c39c0836b2748516532577192ecdaa55e93943caf72bfa62fc26aaaa6
   - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:ee7b6d7807b49e7ff265d3a5b09fac35c9eb59e863e3bf6cd20fbf8a2f41c342
   - quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:57eafed7555133b6e7af1e681d0c9b0968e22ba08cf9628a1ba75f7ac5bcc7ce
