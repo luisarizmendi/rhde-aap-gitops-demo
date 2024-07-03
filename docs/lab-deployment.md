@@ -380,7 +380,7 @@ cp terraform/rhel_vm.tfvars.x86_64 terraform/rhel_vm.tfvars
 First, be sure that you have the latest version of the collection:
 
 ```shell
-ansible-galaxy collection install luisarizmendi.rh_edge_mgmt --force-with-deps
+ansible-galaxy collection install luisarizmendi.rh_edge_mgmt --upgrade
 ```
 
   >**Note**
