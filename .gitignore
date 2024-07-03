@@ -14,6 +14,7 @@ terraform.tfstate*
 
 *pull-secret*
 
+inventory
 
 # OLD demos
 old-demos/demos/microshift-disconnected/files/others/usb-contents/*

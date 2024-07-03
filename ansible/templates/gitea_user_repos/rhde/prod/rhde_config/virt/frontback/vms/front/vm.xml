@@ -1,6 +1,5 @@
 <domain type='kvm'>
   <name>front</name>
-  </metadata>
   <memory unit='KiB'>572864</memory>
   <currentMemory unit='KiB'>572864</currentMemory>
   <vcpu placement='static'>1</vcpu>
