@@ -74,22 +74,18 @@ Clone the this repo and move your CLI prompt to the `ansible` directory on the p
 ├── terraform
 ...
 ├── ansible
-│   ├── files
-...
 │   ├── inventory
 │   ├── playbooks
 │   │   ├── main.yml
 │   ├── templates
 ...
-│   └── vars
-│       └── secrets.yml
 ├── docs
 ...
 └── README.md
 
 ```
 
-When you find a reference to a path during this lab deploymend guide it will consider that you CLi is under the `ansible` directory, so `files` will be in fact `<your cloned demo directory/ansible/files>`.
+When you find a reference to a path during this lab deploymend guide it will consider that you CLi is under the `ansible` directory, so `playbooks` will be in fact `<your cloned demo directory/ansible/playbooks>`.
 
   >**Note**
   >
@@ -157,7 +153,7 @@ You have the steps in the [Ansible Platform Documentation](https://access.redhat
 
 4. Go back to "Details" tab and click "Export Manifest" 
 
-Save apart your `manifest.zip` file in `files` directory (a different location can be configured with the `manifest_file` variable).
+Create a `files` directory under `ansible` and save apart your `manifest.zip` file in that `files` directory (a different location can be configured with the `manifest_file` variable).
 
   >**Note**
   >
@@ -176,8 +172,6 @@ If you use the default path you should have the `manifest.zip` file in this path
 │   ├── playbooks
 ...
 │   ├── templates
-...
-│   └── vars
 ...
 ├── docs
 ...
