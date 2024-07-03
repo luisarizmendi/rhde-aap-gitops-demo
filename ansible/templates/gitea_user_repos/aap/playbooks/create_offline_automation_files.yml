@@ -174,7 +174,7 @@
 
 
 
-        - name: Push rhde_encrypted.tar"
+        - name: Push rhde_encrypted.tar
           shell: |
             cd {{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/
             git config user.name "{{ git_user }}"

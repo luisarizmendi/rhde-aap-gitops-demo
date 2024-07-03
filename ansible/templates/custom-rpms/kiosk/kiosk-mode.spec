@@ -78,8 +78,10 @@ sed -i '/\[daemon\]/a AutomaticLoginEnable=True\nAutomaticLogin=kiosk' /etc/gdm/
 systemctl set-default graphical.target
 
 # Ensure gdm is enabled and started
-systemctl enable gdm
-systemctl start gdm
+systemctl daemon-reload || :
+systemctl enable gdm || :
+systemctl start gdm || :
+
 
 %preun
 %systemd_user_preun com.redhat.Kiosk.SampleApp.service

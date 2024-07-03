@@ -266,7 +266,13 @@ all:
 
 
 
-Also prepare the variables in the `playbooks/main.yml` playbook choosing the system architecture, Microshift release, user and passwords, etc...
+Also prepare the variables in the `playbooks/main.yml` playbook, you may want to change:
+
+* System architecture in `system_arch` (either `x86_64` or `aarch64`). Remember that `aarch64` is under testing.
+* Microshift release in `microshift_release`
+* Edge Management server sudo user and passwords in `image_builder_admin_name` and `image_builder_admin_password`. This is the user with `sudo` privileges that you created in the RHEL server where you installed the Image Builder
+* You will also need to include your container repository in `apps_registry` (see next point).
+
 
 
 ```yaml
@@ -305,7 +311,7 @@ Also prepare the variables in the `playbooks/main.yml` playbook choosing the sys
 
   >**Note**
   >
-  > If you are using the directory tree of this example you could keep the variables that you find there (`gitea_admin_repos_template`, `aap_config_template`, ...), but probably you will need to configure the `image_builder_admin_name` and `image_builder_admin_password` with the user with `sudo` privileges in the RHEL server where you installed the Image Builder. You will also need to include your container repository (see next point).
+  > If you are using the directory tree of this example you could keep the variables that you find there (`gitea_admin_repos_template`, `aap_config_template`, ...)
 
 
 

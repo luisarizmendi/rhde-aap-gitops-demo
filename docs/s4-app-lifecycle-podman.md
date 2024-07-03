@@ -19,8 +19,6 @@ The applications where deployed in two different ways:
 * Some of them where deployed thought the usage of a shell script that you can find in `rhde/prod/rhde_config/scripts/onboarding.sh` which is executed by Ansible Automation Platform while onboarding the device.
 * Others where deployed using a declarative way (check `rhde/prod/rhde_config/apps/podman/quadlet` in Gitea), thanks to  [Quadlet](https://www.redhat.com/sysadmin/quadlet-podman), that permits to create new containerized applications by just putting a descriptor in` /usr/share/containers/systemd/` or `/etc/containers/systemd` (`HOME/.config/containers/systemd/` for rootless containers).
 
-One of the applications deployed with Quadlet will be used in the [Kiosk mode](https://www.redhat.com/en/blog/using-rhels-lightweight-kiosk-mode-edge-deployments), so it will be shown in the device console after the onboarding.
-
 The applications deployed with the script were included to demonstrate some of the Podman capabilities in the following sections below, such as Podman auto-update and Serverless applications. The applications deployed with Quadlet were created so you can see how you can deploy containerized applications with Podman in a GitOps way.
 
 There is a webhook configured to trigger the deployments througt EDA that deploys the Quadlet apps if you push or change content in Gitea, so let's modify the port where one of the applications is published.

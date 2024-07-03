@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # List of required packages
-required_packages=("python3-pip" "python3-inotify" "git" "kiosk-mode")
+required_packages=("python3-pip" "python3-inotify" "git")
 
 # Check if each package is installed
 for package in "${required_packages[@]}"; do

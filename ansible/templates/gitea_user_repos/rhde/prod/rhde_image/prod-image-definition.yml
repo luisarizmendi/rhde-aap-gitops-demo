@@ -38,7 +38,6 @@ builder_compose_pkgs:
   - inotify-gitops
   - workload-manifests
   - tcpdump
-  - kiosk-mode
 builder_compose_customizations:
   user:
     name: "{{ rhde_user_name }}"

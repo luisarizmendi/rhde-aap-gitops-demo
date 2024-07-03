@@ -1,0 +1,73 @@
+{% raw %}
+---
+- name: "Create Offline automation contents"
+  hosts: all
+  gather_facts: false
+  tasks:
+
+
+    - name: Clone the repo
+      delegate_to: localhost
+      block:
+        - name: Remove the local clone
+          file:
+            path: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}"
+            state: absent
+
+        - name: Create temp directory
+          file:
+            path: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}"
+            state: directory
+
+        - name: Extract protocol from git_repo_url
+          set_fact:
+            git_repo_url_http: "{{ git_repo_url | regex_search('^(http|https)') | default('') }}"
+
+        - name: Remove protocol from git_repo_url
+          set_fact:
+            git_repo_url_nohttp: "{{ git_repo_url | regex_replace('^(http|https)://', '') }}"
+   
+        - name: Clone repo 
+          ansible.builtin.shell:            
+            cmd: "git clone {{ git_repo_url_http }}://{{ git_user }}:'{{ git_password }}'@{{ git_repo_url_nohttp }} {{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}"
+
+
+    - name: Push files to Gitea
+      delegate_to: localhost
+      block:
+
+
+        - name: Copy rhde_encrypted.tar
+          ansible.builtin.copy:
+            src: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}/rhde_encrypted.tar"
+            dest: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix_dst1 }}/rhde_encrypted.tar"
+
+
+        - name: Copy rhde_automation_encryption_key
+          copy:
+            src: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}/rhde_automation_encryption_key"
+            dest: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix_dst2 }}/rhde_automation_encryption_key"
+
+
+        - name: Copy rhde-automation-pub.pem
+          copy:
+            src: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix }}/{{ output_path }}/rhde-automation-pub.pem"
+            dest: "{{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}/{{ env }}/{{ path_prefix_dst2 }}/rhde-automation-pub.pem"
+
+
+
+        - name: Push
+          shell: |
+            cd {{ local_clone_path | default('/tmp/offline-automation/repo_clone') }}
+            git config user.name "{{ git_user }}"
+            git config user.email "dont@email.me"
+            git add .
+            git commit -m "offline-automation output files"
+            git push
+
+        - name: Remove temporary folder
+          file:
+            path: "{{ local_path | default('/tmp/offline-automation/') }}"
+            state: absent
+
+{% endraw %}
