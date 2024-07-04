@@ -33,8 +33,7 @@
   > Mac users using UTM to create VMs with TPM are facing issues while booting RHEL, in order to fix that issue you will need to disable Secure Boot. You have to type exit in UEFI shell, select the “Device Manager” -> “Secure Boot Configuration” -> Press Enter on the “Attempt Secure Boot” option
 
 
-
-6. Open an SSH session in the Edge Management server and run `sudo watch /etc/fdo/stores` to see how the voucher is sent when the device turns on
+6. Open an SSH session in the Edge Management server and run `sudo watch ls /etc/fdo/stores` to see how the voucher is sent when the device turns on
 
   >**Note**
   >
