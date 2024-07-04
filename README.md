@@ -140,7 +140,7 @@ The following concepts will be reviewed in this demo:
     * Using Quadlet descriptors (GitOps)
   * Microshift
     * Using Manifest (GitOps)
-    * Using Help
+    * Using Helm
   * Custom RPM
 
 * Edge Device Upgrade
@@ -275,7 +275,7 @@ In this Section we will cover the following topics:
     * Using Quadlet descriptors (GitOps)
   * Microshift
     * Using Manifest (GitOps)
-    * Using Help
+    * Using Helm
   * Custom RPM
 
 * Edge Device Self-Healing

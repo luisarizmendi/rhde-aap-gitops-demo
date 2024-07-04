@@ -23,7 +23,7 @@ During this demo, the following features will be shown:
     * Using Quadlet descriptors (GitOps)
   * Microshift
     * Using Manifest (GitOps)
-    * Using Help
+    * Using Helm
   * Custom RPM
 
 * Edge Device Upgrade
