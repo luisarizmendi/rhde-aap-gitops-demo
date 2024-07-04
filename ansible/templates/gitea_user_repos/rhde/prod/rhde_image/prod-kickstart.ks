@@ -69,7 +69,7 @@ conn %default
     keyexchange=ike
     ikev2=yes
 
-conn $MAC_ADDRESS_FORMAT
+conn edge-$MAC_ADDRESS_FORMAT
     encapsulation=yes
     left=%defaultroute
     leftid=$MAC_ADDRESS_FORMAT
@@ -82,7 +82,7 @@ conn $MAC_ADDRESS_FORMAT
     dpdtimeout=30
     ike=3des-sha1,aes-sha1
     esp=aes-sha2_512+sha2_256
-    leftsubnets={192.168.0.0/16 172.16.0.0/12}
+    leftsubnets={192.168.0.0/16, 172.16.0.0/12}
     rightsubnet=${IP_AAP_PRIVATE}/32
 EOF
 
