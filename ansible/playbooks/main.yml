@@ -34,6 +34,8 @@
         include_aap: true
         include_gitea: true
         include_vpn: true
+        aap_user_count: 3
+        gitea_user_count: 3
         ### DEMO SPECIFIC VARS
         apps_registry: quay.io/luisarizmendi
 
