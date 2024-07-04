@@ -1,4 +1,4 @@
-# RHDE management with AAP Demo
+# RHDE GitOps management with AAP
 
 ## Background 
 
