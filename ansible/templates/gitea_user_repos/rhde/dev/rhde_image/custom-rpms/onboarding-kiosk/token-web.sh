@@ -21,4 +21,4 @@ export HOST_IP
 
 echo "Detected Host IP: $HOST_IP"
 
-/usr/bin/podman run --security-opt label:disable --env HOST_IP="$HOST_IP" --env PYTHONUNBUFFERED=1 -v /var/tmp/:/var/tmp/ -v /usr/share:/usr/share -v /var/lib/microshift/resources/kubeadmin:/var/lib/microshift/resources/kubeadmin -p 8000:8080 quay.io/luisarizmendi/kiosk-token:{{ system_arch }}
+/usr/bin/podman run --security-opt label:disable --env HOST_IP="$HOST_IP" --env PYTHONUNBUFFERED=1 -v /var/tmp/:/var/tmp/ -v /usr/share:/usr/share -v /var/lib/microshift/resources/kubeadmin:/var/lib/microshift/resources/kubeadmin -p 8000:8080 quay.io/luisarizmendi/kiosk-token:latest

@@ -6,7 +6,7 @@ After=local-fs.target
 TimeoutSec=300
 
 [Container]
-Image=quay.io/luisarizmendi/tailwind-pos:{{ system_arch }}
+Image=quay.io/luisarizmendi/tailwind-pos:latest
 PublishPort=8000:80
 
 [Install]
