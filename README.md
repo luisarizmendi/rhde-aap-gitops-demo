@@ -34,7 +34,7 @@ GitOps principles enable a seamless and auditable approach to infrastructure and
 
 ## Demo duration
 
-The demo takes at least 180 minutes with no breaks. If you have time, a break after each main section is recommended. 
+The demo takes more than 2 hours with no breaks so it's intended to be delivered in a full-day workshop. If you have time, a break after each main section is recommended. 
 
   >**Note**
   >
