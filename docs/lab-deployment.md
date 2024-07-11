@@ -225,6 +225,10 @@ red_hat_user: <your RHN user>
 red_hat_password: <your RHN password>
 ```
 
+  >**Note**
+  >
+  >  You should use a valid username in `red_hat_user` variable, and not an email address, for example, `myredhatuser` instead of `myredhatuser@redhat.com`
+
 If you use the default path you should have the `secrets.yml` file in this path:
 
 ```bash
