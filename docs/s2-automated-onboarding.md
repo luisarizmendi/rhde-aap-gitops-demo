@@ -64,6 +64,10 @@ Once everything is ready, go ahead with the device onboarding:
 ![Onboarding Workdlow 1](images/onboarding-workflow-1.png)
 
 
+  >**Note**
+  >
+  > If you need to re-run ansible registration workflow by removing /var/tmp/aap-registered file from edge device
+
     - "Create Host in Controller Inventory": AAP needs a host created in the inventory to be able to manage it. This job creates two new entries. The first one as part of the "Edge Devices" hosts and the second one as a standalone entry. You can show the configurations made by opening the "Inventories" page in AAP and check the "Hosts" tab in both the `Edge Devices` and the `edge-<system mac address with no : characters>` inventories.
 
   >**Note**

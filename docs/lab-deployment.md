@@ -58,6 +58,10 @@ The Edge Management node will nee to have a RHEL 9.x installed (this lab has bee
   >
   > Remember that, as part of this demo, a Terraform script is provided to create, install RHEL and perform the required config in that VM. This is not required to deploy the lab but it will simplify it in case you want to directly run this server in AWS.
 
+  >**Note**
+  >
+  > If the target system default language is anything but English some checks (dnf repolist for example) might fail
+
 * Edge Device: This will depend on what you install on top, but for the base deployment you can use 1.5 vCores, 3GB of memory and 50GB disk.
 
 
