@@ -409,6 +409,7 @@ ansible-galaxy collection install luisarizmendi.rh_edge_mgmt --upgrade
 Once you have all the pre-requisites ready, including the Ansible Vault secret file, you need to run the main playbook including the Vault password by adding the `--ask-vault-pass` option:
 
 ```shell
+cd ansible
 ansible-playbook -vvi inventory --ask-vault-pass playbooks/main.yml 
 ``` 
 
