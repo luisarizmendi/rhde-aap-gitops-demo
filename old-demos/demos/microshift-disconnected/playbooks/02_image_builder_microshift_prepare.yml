@@ -35,7 +35,7 @@
               rhsm = true
 
         - name: Add sources to Image Builder
-          command: "sudo composer-cli sources add {{ item }}"
+          command: "composer-cli sources add {{ item }}"
           loop:
             - "/tmp/rhocp-{{ microshift_release }}.toml"
             - "/tmp/fast-datapath.toml"
